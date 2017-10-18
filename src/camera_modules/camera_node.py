@@ -1,13 +1,12 @@
 import cv2
-import barcode_node
 
 # 0 should be your in-build camera
 # 1 should be your external plugged-in camera
 # TODO : Move number to config
 SELECTED_VIDEO_INDEX = 1
 
-def get_data_from_camera(camera_checker, colour):
 
+def get_data_from_camera(camera_checker, colour):
     cap = cv2.VideoCapture(SELECTED_VIDEO_INDEX)
 
     # Force change the resolution if you want
