@@ -18,7 +18,7 @@ def detect(image):
     # Convert the image to greyscale
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # Compute the Scharr gradient magnitude representation of the images
+    # Compute the Sobel gradient magnitude representation of the images
     # in both the x and y direction
     grad_x = cv2.Sobel(grey, ddepth=cv2.cv.CV_32F, dx=1, dy=0, ksize=-1)
     grad_y = cv2.Sobel(grey, ddepth=cv2.cv.CV_32F, dx=0, dy=1, ksize=-1)
