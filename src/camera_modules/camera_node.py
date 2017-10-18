@@ -35,7 +35,7 @@ def get_data_from_camera(camera_checker, colour):
             break
 
     # Once done, destroy all windows
-    # We can move this destroy and the VideoCapture at the begnning
+    # We can move this destroy and the VideoCapture at the beginning
     # to some sort of an init method later on
     cap.release()
     cv2.destroyAllWindows()
