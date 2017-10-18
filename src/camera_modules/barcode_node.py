@@ -29,7 +29,7 @@ def detect(image):
 
     # Blur and threshold the image
     blurred = cv2.blur(gradient, (9, 9))
-    (_, thresh) = cv2.threshold(blurred, 225, 255, cv2.THRESH_BINARY)
+    _, thresh = cv2.threshold(blurred, 225, 255, cv2.THRESH_BINARY)
 
     # Construct a closing kernel and apply it to the thresholded image
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 7))
@@ -40,7 +40,7 @@ def detect(image):
     closed = cv2.dilate(closed, None, iterations=4)
 
     # Find the contours in the thresholded image
-    (cnts, _) = cv2.findContours(closed.copy(),
+    cnts, _ = cv2.findContours(closed.copy(),
                                  cv2.RETR_EXTERNAL,
                                  cv2.CHAIN_APPROX_SIMPLE)
 
@@ -50,8 +50,8 @@ def detect(image):
 
     # Otherwise, sort the contours by area and compute the rotated
     # bounding box of the largest contour
-    c = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
-    rect = cv2.minAreaRect(c)
+    sorted_contours = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
+    rect = cv2.minAreaRect(sorted_contours)
     box = np.int0(cv2.cv.BoxPoints(rect))
 
     # Draw the box on the image
