@@ -41,8 +41,8 @@ def detect(image):
 
     # Find the contours in the thresholded image
     cnts, _ = cv2.findContours(closed.copy(),
-                                 cv2.RETR_EXTERNAL,
-                                 cv2.CHAIN_APPROX_SIMPLE)
+                               cv2.RETR_EXTERNAL,
+                               cv2.CHAIN_APPROX_SIMPLE)
 
     # If no contours were found, return None
     if len(cnts) == 0:
@@ -59,6 +59,7 @@ def detect(image):
 
     # Return the bounding box of the barcode
     return identify_barcode(box)
+
 
 if __name__ == '__main__':
     import camera_node
