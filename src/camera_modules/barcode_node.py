@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import cv2
 import numpy as np
 
@@ -17,7 +19,7 @@ def detect(image):
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Compute the Scharr gradient magnitude representation of the images
-    # In both the x and y direction
+    # in both the x and y direction
     grad_x = cv2.Sobel(grey, ddepth=cv2.cv.CV_32F, dx=1, dy=0, ksize=-1)
     grad_y = cv2.Sobel(grey, ddepth=cv2.cv.CV_32F, dx=0, dy=1, ksize=-1)
 
@@ -47,7 +49,7 @@ def detect(image):
         return None
 
     # Otherwise, sort the contours by area and compute the rotated
-    # Bounding box of the largest contour
+    # bounding box of the largest contour
     c = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
     rect = cv2.minAreaRect(c)
     box = np.int0(cv2.cv.BoxPoints(rect))
@@ -57,3 +59,7 @@ def detect(image):
 
     # Return the bounding box of the barcode
     return identify_barcode(box)
+
+if __name__ == '__main__':
+    import camera_node
+    camera_node.get_data_from_camera(detect, True)
