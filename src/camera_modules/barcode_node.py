@@ -15,7 +15,7 @@ def detect(image):
         https://www.pyimagesearch.com/2014/11/24/detecting-barcodes-images-python-opencv/
     """
 
-    # Convert the image to grayscale
+    # Convert the image to greyscale
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Compute the Scharr gradient magnitude representation of the images

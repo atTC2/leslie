@@ -22,7 +22,7 @@ def get_data_from_camera(camera_checker, colour):
         data = camera_checker(frame)
 
         # Choose whether or not you want colour in your image
-        # E.g. barcode scanning is done best on grey scale images
+        # E.g. barcode scanning is done best on greyscale images
         if colour is False:
             grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             cv2.imshow('frame', grey)
