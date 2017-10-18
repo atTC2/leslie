@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 # Unimplemented method for identifying the barcode in a frame
 def identify_barcode(frame):
     return None
@@ -10,14 +11,15 @@ def identify_barcode(frame):
     https://www.pyimagesearch.com/2014/11/24/detecting-barcodes-images-python-opencv/
 """
 
+
 def detect(image):
     # convert the image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # compute the Scharr gradient magnitude representation of the images
     # in both the x and y direction
-    gradX = cv2.Sobel(gray, ddepth = cv2.cv.CV_32F, dx = 1, dy = 0, ksize = -1)
-    gradY = cv2.Sobel(gray, ddepth = cv2.cv.CV_32F, dx = 0, dy = 1, ksize = -1)
+    gradX = cv2.Sobel(gray, ddepth=cv2.cv.CV_32F, dx=1, dy=0, ksize=-1)
+    gradY = cv2.Sobel(gray, ddepth=cv2.cv.CV_32F, dx=0, dy=1, ksize=-1)
 
     # subtract the y-gradient from the x-gradient
     gradient = cv2.subtract(gradX, gradY)
@@ -32,12 +34,13 @@ def detect(image):
     closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
     # perform a series of erosions and dilations
-    closed = cv2.erode(closed, None, iterations = 4)
-    closed = cv2.dilate(closed, None, iterations = 4)
+    closed = cv2.erode(closed, None, iterations=4)
+    closed = cv2.dilate(closed, None, iterations=4)
 
     # find the contours in the thresholded image
-    (cnts, _) = cv2.findContours(closed.copy(), cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_SIMPLE)
+    (cnts, _) = cv2.findContours(closed.copy(),
+                                 cv2.RETR_EXTERNAL,
+                                 cv2.CHAIN_APPROX_SIMPLE)
 
     # if no contours were found, return None
     if len(cnts) == 0:
@@ -45,7 +48,7 @@ def detect(image):
 
     # otherwise, sort the contours by area and compute the rotated
     # bounding box of the largest contour
-    c = sorted(cnts, key = cv2.contourArea, reverse = True)[0]
+    c = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
     rect = cv2.minAreaRect(c)
     box = np.int0(cv2.cv.BoxPoints(rect))
 

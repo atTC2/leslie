@@ -2,9 +2,11 @@ import numpy as np
 import cv2
 import barcode_node
 
+
 def get_data_from_camera(camera_checker, color):
 
-    # 0 should be your in-build camera, 1 should be your external plugged-in camera
+    # 0 should be your in-build camera
+    # 1 should be your external plugged-in camera
     cap = cv2.VideoCapture(1)
 
     # Force change the resolution if you want
@@ -12,7 +14,7 @@ def get_data_from_camera(camera_checker, color):
     # cap.set(4, 720.)
 
     data = None
-    while(data == None):
+    while(data is None):
         # Get the current frame
         ret, frame = cap.read()
 
@@ -21,11 +23,11 @@ def get_data_from_camera(camera_checker, color):
 
         # Choose whether or not you want color in your image
         # E.g. barcode scanning is done best on gray scale images
-        if(color == False):
+        if(color is False):
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            cv2.imshow('frame',gray)
+            cv2.imshow('frame', gray)
         else:
-            cv2.imshow('frame',frame)
+            cv2.imshow('frame', frame)
 
         # Publish
         if cv2.waitKey(1) & 0xFF == ord('q'):
