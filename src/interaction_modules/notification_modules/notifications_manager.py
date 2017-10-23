@@ -12,16 +12,16 @@ def manage_notification(data):
     # can be removed so we can parse the rest of the message into JSON
     data = json.loads(str(data)[6:])
 
-    if(data['send_beep']):
+    if data['send_beep']:
         beep_module.notify(data)
-    if(data['send_email']):
+    if data['send_email']:
         email_module.notify(data)
-    if(data['send_tweet']):
+    if data['send_tweet']:
         twitter_module.notify(data)
 
 
 def start_listen():
-    rospy.init_node('notifications_node', anonymous = True)
+    rospy.init_node('notifications_node',anonymous=True)
     rospy.Subscriber('notifier', String, manage_notification)
     rospy.spin()
 

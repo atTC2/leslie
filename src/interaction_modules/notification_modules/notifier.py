@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
         builder = NotificationBuilder('Seb')
         builder.send_email('leslietherobot.aka.pips@gmail.com',
-                        'You\'re the best!')
+                           'You\'re the best!')
         builder.send_beep('You\'re the best!')
         builder.send_tweet('Seb, you\'re the best!')
 
