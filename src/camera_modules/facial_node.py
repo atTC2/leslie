@@ -31,7 +31,7 @@ def identify(image):
         results = face_recognition.compare_faces(saved_encodings,
                                                  unknown_encoding)
 
-        # Identify the indeces of the matched faces
+        # Identify the indices of the matched faces
         indices += [index for index, flag in enumerate(results)
                              if flag]
 
