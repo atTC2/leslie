@@ -63,4 +63,4 @@ def detect(image):
 
 if __name__ == '__main__':
     import camera_node
-    camera_node.get_data_from_camera(detect, True)
+    camera_node.get_data_from_camera(detect, True, True, 'resources/recordings/barcode.avi')
