@@ -3,11 +3,9 @@
 import cv2
 import numpy as np
 
-
 # Unimplemented method for identifying the barcode in a frame
 def identify_barcode(frame):
     return None
-
 
 def detect(image):
     """
@@ -63,4 +61,4 @@ def detect(image):
 
 if __name__ == '__main__':
     import camera_node
-    camera_node.get_data_from_camera(detect, True)
+    camera_node.get_data_from_camera(detect, True, True, 'resources/recordings/barcode.avi')
