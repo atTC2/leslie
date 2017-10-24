@@ -3,9 +3,11 @@
 import cv2
 import numpy as np
 
+
 # Unimplemented method for identifying the barcode in a frame
 def identify_barcode(frame):
     return None
+
 
 def detect(image):
     """

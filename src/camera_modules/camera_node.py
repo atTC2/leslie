@@ -8,7 +8,8 @@ RECORD_VIDEO = False
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 OUT = None
-fourcc = cv2.cv.CV_FOURCC('M','J','P','G')
+FOURCC = cv2.cv.CV_FOURCC('M','J','P','G')
+
 
 def get_data_from_camera(camera_checker, colour, automatic_record, filename):
     global OUT, FRAME_WIDTH, FRAME_HEIGHT
@@ -61,11 +62,13 @@ def get_data_from_camera(camera_checker, colour, automatic_record, filename):
     # passed for further planning/decision making
     return data
 
+
 def start_recording(filename):
-    global OUT, RECORD_VIDEO
+    global OUT, RECORD_VIDEO, FOURCC
 
     RECORD_VIDEO = True
-    OUT = cv2.VideoWriter(filename, fourcc, 20.0 ,(FRAME_WIDTH,FRAME_HEIGHT))
+    OUT = cv2.VideoWriter(filename, FOURCC, 20.0 ,(FRAME_WIDTH,FRAME_HEIGHT))
+
 
 def stop_recording():
     global OUT, RECORD_VIDEO
