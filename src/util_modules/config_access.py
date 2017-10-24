@@ -1,19 +1,24 @@
 import json
-with open(rospy.get_param('../../resources/configurations/leslie.json'), 'r') as f:
-    config = json.load(f)
+import os
+
+config_file_path = os.path.join(os.path.dirname(__file__),
+                                '../../resources/configurations/leslie.json')
+
+with open(config_file_path, 'r') as f:
+     config = json.load(f)
 
 """
     Static strings in order to access the keys
 """
 KEY_VERSION = "version"
 
+
 def get_config(key):
     """
     Retrieve a specific configuration
-
-    :Args:
-        | key (String): An identifier for the specific requested configuration
-    :Return:
-        | (String): The configuration acording to the key from the JSON file.
+    :param key:  An identifier for the specific requested configuration
+    :type key: String
+    :return: The configuration acording to the key from the JSON file.
+    :rtype: String
      """
     return config[key]
