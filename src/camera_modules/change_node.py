@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import cv2
+import os
 from Queue import Queue
+from datetime import datetime
 
 # TODO serious calibration of the below values at day/evening/night
 # Image pixels are BGR
@@ -14,6 +16,10 @@ FRAME_QUEUE_SIZE = 30
 previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
 crop_left = None
 crop_right = None
+
+# TODO make video output dir configurable
+VIDEO_OUTPUT_DIR = os.path.expanduser('~/Documents/PIPSRecordings/')
+video_writer = None
 
 
 def is_in_threshold_table(colour):
@@ -96,21 +102,22 @@ def crop_to_table(image):
     return image[:, crop_left:crop_right]
 
 
-def detect_change(image):
+def detect_change(original_image):
     """
     Detects change between the current image and the last.
     Some code inspired by https://gist.github.com/rrama/0bd1c29c8a1c1597b1eaf63847cecbf2
     TODO when integrated into main system, allow returning True/False
-    :param image: The image to compare to the previous (the method will return False if it is the first call)
-    :type image: numpy.ndarray
+    :param original_image: The image to compare to the previous (the method will return False if it is the first call)
+    :type original_image: numpy.ndarray
     :return: True is change was detected, False if not
     :rtype: bool
     """
     global previous_frames
     global crop_left
     global crop_right
+    global video_writer
 
-    image = crop_to_table(image)
+    image = crop_to_table(original_image)
 
     # Convert the image to greyscale
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -143,10 +150,43 @@ def detect_change(image):
     # Save the most recent frame
     previous_frames.put(grey)
 
+    # Add timestamp
+    vertical, _ = original_image.shape[:2]
+    cv2.putText(original_image, str(datetime.utcnow()), (0, vertical), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 1)
+
+    # Save the image if there was change
+    if changed:
+
+        if video_writer is None:
+            # Initialise the video writer
+            video_name = VIDEO_OUTPUT_DIR + str(datetime.utcnow()) + '.avi'
+            print 'Outputting to', video_name
+            vertical, horizontal = original_image.shape[:2]
+            video_writer = cv2.VideoWriter(video_name, cv2.cv.CV_FOURCC(*'XVID'), 30, (horizontal, vertical))
+
+        video_writer.write(original_image)
+
     # return changed # TODO when implemented properly, remove comment
+
+
+def reset():
+    """
+    Resets all configured values to null
+    """
+    global crop_left
+    global crop_right
+    global previous_frames
+    global video_writer
+
+    crop_left = None
+    crop_right = None
+    previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
+
+    video_writer.release()
+    video_writer = None
 
 
 if __name__ == '__main__':
     import camera_node
 
-    camera_node.get_data_from_camera(detect_change, True)
+    camera_node.get_data_from_camera(detect_change, reset, True)

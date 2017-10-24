@@ -3,10 +3,10 @@ import cv2
 # 0 should be your in-build camera
 # 1 should be your external plugged-in camera
 # TODO : Move number to config
-SELECTED_VIDEO_INDEX = 1
+SELECTED_VIDEO_INDEX = 0
 
 
-def get_data_from_camera(camera_checker, colour):
+def get_data_from_camera(camera_checker, reset_func, colour):
     cap = cv2.VideoCapture(SELECTED_VIDEO_INDEX)
 
     # Force change the resolution if you want
@@ -38,6 +38,8 @@ def get_data_from_camera(camera_checker, colour):
     # to some sort of an init method later on
     cap.release()
     cv2.destroyAllWindows()
+    if reset_func is not None:
+        reset_func()
 
     # Return whatever data was found through the camera_checker method
     # passed for further planning/decision making
