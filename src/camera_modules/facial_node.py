@@ -33,7 +33,7 @@ def identify(image):
 
         # Identify the indices of the matched faces
         indices += [index for index, flag in enumerate(results)
-                             if flag]
+                                          if flag]
 
     # Get rid of any duplicates
     indices = set(indices)
