@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+  <!-- we need amcl running -->
+  <include file="$(env PWD)/amcl.launch"/> 
+  
+  <arg name="param_dir" default="$(find leslie)/src/movement_modules/param"/>
+  
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen"> 
+    <rosparam file="$(param_dir)/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(param_dir)/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(param_dir)/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(param_dir)/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(param_dir)/base_local_planner_params.yaml" command="load" />
+  </node>
+</launch>

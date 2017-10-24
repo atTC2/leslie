@@ -1,0 +1,13 @@
+# this currently works for rviz. but will have to tune for robot
+TrajectoryPlannerROS:
+  min_vel_x: 0.1
+  max_vel_x: 0.5
+  min_vel_theta: 1.1
+  max_vel_theta: 3.0
+  min_in_place_vel_theta: 3.0
+
+  acc_lim_theta: 1.9
+  acc_lim_x: 0.018
+  acc_lim_y: 0.018
+
+  holonomic_robot: false
