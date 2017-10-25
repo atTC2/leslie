@@ -22,26 +22,25 @@ class Actions(object):
     Actions that can be taken
     """
     CALLED_OVER = "Got instruction"
-    ARRIVED_AT_TABLE = "Arrived at table"
+    ARRIVED = "Arrived"
     GOT_FACE = "Got face(s)"
     READY_TO_LOCK = "Read to lock"
     MOVEMENT_DETECTED = "Movement detected!"
     ALARM_HANDLED = "Alarm handled (phew!)"
     FACE_RECOGNISED = "Face recognised"
-    ARRIVED_AT_HOME = "Arrived home"
 
 
 # Mapping of state + action = state
 state_machine = dict()
 state_machine[(States.WAIT_FOR_INSTRUCTION, Actions.CALLED_OVER)] = States.MOVE_TO_TABLE
-state_machine[(States.MOVE_TO_TABLE, Actions.ARRIVED_AT_TABLE)] = States.AT_TABLE
+state_machine[(States.MOVE_TO_TABLE, Actions.ARRIVED)] = States.AT_TABLE
 state_machine[(States.AT_TABLE, Actions.GOT_FACE)] = States.LOCKING
 state_machine[(States.LOCKING, Actions.READY_TO_LOCK)] = States.LOCKED_AND_WAITING
 state_machine[(States.LOCKED_AND_WAITING, Actions.MOVEMENT_DETECTED)] = States.ALARM
 state_machine[(States.ALARM, Actions.FACE_RECOGNISED)] = States.ALARM_REPORT
 state_machine[(States.ALARM_REPORT, Actions.ALARM_HANDLED)] = States.MOVE_TO_HOME
 state_machine[(States.LOCKED_AND_WAITING, Actions.FACE_RECOGNISED)] = States.MOVE_TO_HOME
-state_machine[(States.MOVE_TO_HOME, Actions.ARRIVED_AT_HOME)] = States.WAIT_FOR_INSTRUCTION
+state_machine[(States.MOVE_TO_HOME, Actions.ARRIVED)] = States.WAIT_FOR_INSTRUCTION
 
 # Always start on WAIT FOR INSTRUCTION
 current_state = States.WAIT_FOR_INSTRUCTION
