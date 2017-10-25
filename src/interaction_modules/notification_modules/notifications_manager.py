@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import rospy
 from std_msgs.msg import String
 import json
@@ -21,9 +22,10 @@ def manage_notification(data):
 
 
 def start_listen():
-    rospy.init_node('notifications_node',anonymous=True)
+    rospy.init_node('notifications_node', anonymous=True)
     rospy.Subscriber('notifier', String, manage_notification)
     rospy.spin()
+
 
 if __name__ == '__main__':
     start_listen()

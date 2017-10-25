@@ -5,7 +5,7 @@ engine = pyttsx.init()
 
 def notify(data):
     """
-    Say the message outloud and print it
+    Say the message out loud and print it
     """
     beep_full_message = 'Hi {0}! {1}'.format(data['recipient'],
                                              data['beep_message'])

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import tweepy
 
 CONSUMER_KEY = 'VDbLbeG9KxlJ3M7uufFKe5gH5'

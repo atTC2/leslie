@@ -1,4 +1,6 @@
 import smtplib
+import requests.packages.urllib3
+requests.packages.urllib3.disable_warnings()
 
 # TODO: Move to configuration file
 ROBOT_EMAIL_ADDRESS = 'leslietherobot.aka.pips@gmail.com'
