@@ -77,3 +77,8 @@ def action_callback(action_msg):
         publish_state(action_data)
     except KeyError:
         print >> sys.stderr, 'Error updating state! Current state:', current_state, 'Action:', action_id
+
+
+# Setup publisher for states and subscriber for actions
+pub = rospy.Publisher('/state', String, queue_size=1)
+rospy.Subscriber('/action', String, action_callback, queue_size=1)
