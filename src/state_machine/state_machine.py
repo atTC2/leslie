@@ -59,7 +59,7 @@ def publish_state(data):
 
     pub.publish(json.dumps(state))
 
-s
+
 def action_callback(action_msg):
     """
     Sets a new state given the current state allows for the given action to be taken
