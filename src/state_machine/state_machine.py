@@ -1,9 +1,10 @@
 import rospy
 from std_msgs.msg import String
 import sys
+import json
 
 
-class States(object):
+class StateIDs(object):
     """
     Possible states the system can be in
     """
@@ -17,7 +18,7 @@ class States(object):
     MOVE_TO_HOME = "Moving to home"
 
 
-class Actions(object):
+class ActionIDs(object):
     """
     Actions that can be taken
     """
@@ -32,27 +33,31 @@ class Actions(object):
 
 # Mapping of state + action = state
 state_machine = dict()
-state_machine[(States.WAIT_FOR_INSTRUCTION, Actions.CALLED_OVER)] = States.MOVE_TO_TABLE
-state_machine[(States.MOVE_TO_TABLE, Actions.ARRIVED)] = States.AT_TABLE
-state_machine[(States.AT_TABLE, Actions.GOT_FACE)] = States.LOCKING
-state_machine[(States.LOCKING, Actions.READY_TO_LOCK)] = States.LOCKED_AND_WAITING
-state_machine[(States.LOCKED_AND_WAITING, Actions.MOVEMENT_DETECTED)] = States.ALARM
-state_machine[(States.ALARM, Actions.FACE_RECOGNISED)] = States.ALARM_REPORT
-state_machine[(States.ALARM_REPORT, Actions.ALARM_HANDLED)] = States.MOVE_TO_HOME
-state_machine[(States.LOCKED_AND_WAITING, Actions.FACE_RECOGNISED)] = States.MOVE_TO_HOME
-state_machine[(States.MOVE_TO_HOME, Actions.ARRIVED)] = States.WAIT_FOR_INSTRUCTION
+state_machine[(StateIDs.WAIT_FOR_INSTRUCTION, ActionIDs.CALLED_OVER)] = StateIDs.MOVE_TO_TABLE
+state_machine[(StateIDs.MOVE_TO_TABLE, ActionIDs.ARRIVED)] = StateIDs.AT_TABLE
+state_machine[(StateIDs.AT_TABLE, ActionIDs.GOT_FACE)] = StateIDs.LOCKING
+state_machine[(StateIDs.LOCKING, ActionIDs.READY_TO_LOCK)] = StateIDs.LOCKED_AND_WAITING
+state_machine[(StateIDs.LOCKED_AND_WAITING, ActionIDs.MOVEMENT_DETECTED)] = StateIDs.ALARM
+state_machine[(StateIDs.ALARM, ActionIDs.FACE_RECOGNISED)] = StateIDs.ALARM_REPORT
+state_machine[(StateIDs.ALARM_REPORT, ActionIDs.ALARM_HANDLED)] = StateIDs.MOVE_TO_HOME
+state_machine[(StateIDs.LOCKED_AND_WAITING, ActionIDs.FACE_RECOGNISED)] = StateIDs.MOVE_TO_HOME
+state_machine[(StateIDs.MOVE_TO_HOME, ActionIDs.ARRIVED)] = StateIDs.WAIT_FOR_INSTRUCTION
 
 # Always start on WAIT FOR INSTRUCTION
-current_state = States.WAIT_FOR_INSTRUCTION
+current_state = StateIDs.WAIT_FOR_INSTRUCTION
 
 
-def publish_state():
+def publish_state(data):
     """
     Publishes the current state to topic 'state'
     """
     global current_state
 
-    pub.publish(current_state)
+    state = {}
+    state['id'] = current_state
+    state['data'] = data
+
+    pub.publish(json.dumps(state))
 
 
 def action_callback(action_msg):
@@ -63,14 +68,12 @@ def action_callback(action_msg):
     """
     global current_state
 
-    action = action_msg.data
+    action_taken = json.loads(str(action_msg)[6:])
+    action_id = action_taken['id']
+    action_data = action_taken['data']
+
     try:
-        current_state = state_machine[(current_state, action)]
-        publish_state()
+        current_state = state_machine[(current_state, action_id)]
+        publish_state(action_data)
     except KeyError:
-        print >> sys.stderr, 'Error updating state! Current state:', current_state, 'Action:', action
-
-
-# Setup publisher for states and subscriber for actions
-pub = rospy.Publisher('/state', String, queue_size=1)
-rospy.Subscriber('/action', String, action_callback, queue_size=1)
+        print >> sys.stderr, 'Error updating state! Current state:', current_state, 'Action:', action_id
