@@ -1,22 +1,19 @@
 import cv2
 
-# 0 should be your in-build camera
-# 1 should be your external plugged-in camera
-# TODO : Move number to config
-SELECTED_VIDEO_INDEX = 2
 
-
-def get_data_from_camera(camera_checker, reset_func):
+def get_data_from_camera(camera_index, camera_checker, reset_func):
     """
     Gets a camera and processes the frames with the function given
+    :param camera_index: The camera to get frames from
     :param camera_checker: Image processing function
     :param reset_func: Reset function to call when the video closes
+    :type camera_index: int
     :type camera_checker: (numpy.ndarray) -> T
     :type reset_func: () -> None
     :return: data (currently always None)
     :rtype: T
     """
-    cap = cv2.VideoCapture(SELECTED_VIDEO_INDEX)
+    cap = cv2.VideoCapture(camera_index)
 
     data = None
     while data is None:

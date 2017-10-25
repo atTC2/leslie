@@ -5,21 +5,20 @@ import os
 import subprocess
 from Queue import Queue
 from datetime import datetime
+from util_modules import config_access
 
-# TODO serious calibration of the below values at day/evening/night
 # Image pixels are BGR
-TABLE_MIN_RGB_THRESHOLD = [0, 120, 220]
-TABLE_MAX_RGB_THRESHOLD = [190, 255, 255]
+TABLE_MIN_BGR_THRESHOLD = config_access.get_config(config_access.KEY_TABLE_MIN_BGR_THRESHOLD)
+TABLE_MAX_BGR_THRESHOLD = config_access.get_config(config_access.KEY_TABLE_MAX_BGR_THRESHOLD)
 # Minimum percentage of the image that should be retained when cropping
-MIN_TABLE_WIDTH = 0.3
+MIN_TABLE_WIDTH = config_access.get_config(config_access.KEY_MIN_TABLE_WIDTH)
 
-FRAME_QUEUE_SIZE = 30
+FRAME_QUEUE_SIZE = config_access.get_config(config_access.KEY_FRAME_QUEUE_SIZE)
 previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
 crop_left = None
 crop_right = None
 
-# TODO make video output dir configurable
-VIDEO_OUTPUT_DIR = os.path.expanduser('~/Documents/PIPSRecordings/')
+VIDEO_OUTPUT_DIR = os.path.expanduser(config_access.get_config(config_access.KEY_VIDEO_OUTPUT_DIR))
 video_file = None
 video_writer = None
 
@@ -33,9 +32,9 @@ def is_in_threshold_table(colour):
     :rtype: bool
     """
     # Figure out if the colour is within the min/max threshold of being a table
-    diff_b = TABLE_MIN_RGB_THRESHOLD[0] <= colour[0] <= TABLE_MAX_RGB_THRESHOLD[0]
-    diff_g = TABLE_MIN_RGB_THRESHOLD[1] <= colour[1] <= TABLE_MAX_RGB_THRESHOLD[1]
-    diff_r = TABLE_MIN_RGB_THRESHOLD[2] <= colour[2] <= TABLE_MAX_RGB_THRESHOLD[2]
+    diff_b = TABLE_MIN_BGR_THRESHOLD[0] <= colour[0] <= TABLE_MAX_BGR_THRESHOLD[0]
+    diff_g = TABLE_MIN_BGR_THRESHOLD[1] <= colour[1] <= TABLE_MAX_BGR_THRESHOLD[1]
+    diff_r = TABLE_MIN_BGR_THRESHOLD[2] <= colour[2] <= TABLE_MAX_BGR_THRESHOLD[2]
     return diff_b and diff_g and diff_r
 
 
@@ -210,4 +209,5 @@ def reset():
 if __name__ == '__main__':
     import camera_node
 
-    camera_node.get_data_from_camera(detect_change, reset)
+    camera_node.get_data_from_camera(config_access.get_config(config_access.KEY_CHANGE_CAMERA_INDEX), detect_change,
+                                     reset)
