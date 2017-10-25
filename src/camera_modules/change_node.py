@@ -2,6 +2,7 @@
 
 import cv2
 import os
+import subprocess
 from Queue import Queue
 from datetime import datetime
 
@@ -19,6 +20,7 @@ crop_right = None
 
 # TODO make video output dir configurable
 VIDEO_OUTPUT_DIR = os.path.expanduser('~/Documents/PIPSRecordings/')
+video_file = None
 video_writer = None
 
 
@@ -115,6 +117,7 @@ def detect_change(original_image):
     global previous_frames
     global crop_left
     global crop_right
+    global video_file
     global video_writer
 
     image = crop_to_table(original_image)
@@ -145,7 +148,7 @@ def detect_change(original_image):
         changed = True
         # Compute the bounding box for the contour, draw it on the frame, and update the text
         x, y, w, h = cv2.boundingRect(contour)
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
     # Save the most recent frame
     previous_frames.put(grey)
@@ -159,34 +162,52 @@ def detect_change(original_image):
 
         if video_writer is None:
             # Initialise the video writer
-            video_name = VIDEO_OUTPUT_DIR + str(datetime.utcnow()) + '.avi'
-            print 'Outputting to', video_name
+            if video_file is None:
+                video_file = VIDEO_OUTPUT_DIR + str(datetime.utcnow()) + '.avi'
+                video_file = video_file.replace(' ', '_')
+
+            print 'Outputting to', video_file
             vertical, horizontal = original_image.shape[:2]
-            video_writer = cv2.VideoWriter(video_name, cv2.cv.CV_FOURCC(*'XVID'), 30, (horizontal, vertical))
+            video_writer = cv2.VideoWriter(video_file, cv2.cv.CV_FOURCC(*'XVID'), 20, (horizontal, vertical))
 
         video_writer.write(original_image)
 
-    # return changed # TODO when implemented properly, remove comment
+        # return changed # TODO when implemented properly, remove comment
 
 
 def reset():
     """
-    Resets all configured values to null
+    Resets all configured values to null and compressed video file if one was made
     """
     global crop_left
     global crop_right
     global previous_frames
+    global video_file
     global video_writer
 
     crop_left = None
     crop_right = None
     previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
 
-    video_writer.release()
-    video_writer = None
+    if video_writer is not None:
+        video_writer.release()
+        video_writer = None
+
+    if video_file is not None:
+        # Compress the video
+        dev_null = open(os.devnull, 'w')
+        compress_result = subprocess.call(
+            ['HandBrakeCLI', '-i', video_file, '-o', video_file.replace('.avi', '.mp4'), '-e', 'x265', '-q', '20'],
+            stdout=dev_null, stderr=subprocess.STDOUT)
+
+        if compress_result == 0:
+            # Remove old file
+            os.remove(video_file)
+
+        video_file = None
 
 
 if __name__ == '__main__':
     import camera_node
 
-    camera_node.get_data_from_camera(detect_change, reset, True)
+    camera_node.get_data_from_camera(detect_change, reset)

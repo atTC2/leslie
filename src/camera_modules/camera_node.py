@@ -3,15 +3,20 @@ import cv2
 # 0 should be your in-build camera
 # 1 should be your external plugged-in camera
 # TODO : Move number to config
-SELECTED_VIDEO_INDEX = 0
+SELECTED_VIDEO_INDEX = 2
 
 
-def get_data_from_camera(camera_checker, reset_func, colour):
+def get_data_from_camera(camera_checker, reset_func):
+    """
+    Gets a camera and processes the frames with the function given
+    :param camera_checker: Image processing function
+    :param reset_func: Reset function to call when the video closes
+    :type camera_checker: (numpy.ndarray) -> T
+    :type reset_func: () -> None
+    :return: data (currently always None)
+    :rtype: T
+    """
     cap = cv2.VideoCapture(SELECTED_VIDEO_INDEX)
-
-    # Force change the resolution if you want
-    # cap.set(3, 1280.)
-    # cap.set(4, 720.)
 
     data = None
     while data is None:
@@ -21,15 +26,10 @@ def get_data_from_camera(camera_checker, reset_func, colour):
         # Apply the method
         data = camera_checker(frame)
 
-        # Choose whether or not you want colour in your image
-        # E.g. barcode scanning is done best on greyscale images
-        if colour is False:
-            grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            cv2.imshow('frame', grey)
-        else:
-            cv2.imshow('frame', frame)
+        # Make frame
+        cv2.imshow('frame', frame)
 
-        # Publish
+        # Publish frame
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
