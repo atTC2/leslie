@@ -44,39 +44,39 @@ state_machine[(StateIDs.LOCKED_AND_WAITING, ActionIDs.FACE_RECOGNISED)] = StateI
 state_machine[(StateIDs.MOVE_TO_HOME, ActionIDs.ARRIVED)] = StateIDs.WAIT_FOR_INSTRUCTION
 
 # Always start on WAIT FOR INSTRUCTION
-current_state = StateIDs.WAIT_FOR_INSTRUCTION
+current_state_id = StateIDs.WAIT_FOR_INSTRUCTION
 
 
 def publish_state(data):
     """
     Publishes the current state to topic 'state'
     """
-    global current_state
+    global current_state_id
 
     state = {}
-    state['id'] = current_state
+    state['id'] = current_state_id
     state['data'] = data
 
     pub.publish(json.dumps(state))
 
-
+s
 def action_callback(action_msg):
     """
     Sets a new state given the current state allows for the given action to be taken
     :param action_msg: The The message received from the 'action' topic
     :type action_msg: std_msgs.String
     """
-    global current_state
+    global current_state_id
 
     action_taken = json.loads(str(action_msg)[6:])
     action_id = action_taken['id']
     action_data = action_taken['data']
 
     try:
-        current_state = state_machine[(current_state, action_id)]
+        current_state_id = state_machine[(current_state_id, action_id)]
         publish_state(action_data)
     except KeyError:
-        print >> sys.stderr, 'Error updating state! Current state:', current_state, 'Action:', action_id
+        print >> sys.stderr, 'Error updating state! Current state:', current_state_id, 'Action:', action_id
 
 
 # Setup publisher for states and subscriber for actions
