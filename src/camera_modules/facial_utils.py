@@ -2,7 +2,7 @@ import face_recognition
 import os
 
 # TODO: Put these in a configuration file
-FACES_LOCATION = "../../resources/known_faces/"
+FACES_LOCATION = os.path.dirname(__file__) + "/../../resources/known_faces/"
 FACES_EXTENSION = ".jpg"
 
 
