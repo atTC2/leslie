@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>  
-  <node name="amcl" pkg="amcl" type="amcl">
+  <node name="amcl" pkg="amcl" type="amcl">    
+    <param name="initial_pose_x"            value="0.0"/>
+    <param name="initial_pose_y"            value="0.0"/>
+    <param name="initial_pose_a"            value="0"/>
+    
     <!-- setting odometer noise -->
     <param name="odom_model_type"           value="diff"/>
-    <param name="odom_alpha1"               value="0.11"/>
-    <param name="odom_alpha2"               value="0.1"/>
-    <param name="odom_alpha3"               value="0.056"/>
+    <param name="odom_alpha1"               value="0.1"/>
+    <param name="odom_alpha2"               value="0.11"/>
+    <param name="odom_alpha3"               value="0.1"/>
+    <param name="odom_alpha4"               value="0.1"/>
     <!-- setting laser scan -->
     <param name="laser_model_type"          value="likelihood_field"/>
-    <param name="laser_max_beams"             value="512"/>
+    <param name="laser_max_beams"           value="512"/>
     <param name="laser_max_range"           value="-1.0"/>
+    <param name="laser_likelihood_max_dist" value="0.0"/>
     <!-- setting particles scan -->
     <param name="min_particles"             value="50"/>
     <param name="max_particles"             value="400"/>
@@ -22,7 +28,11 @@
     <!-- Increase tolerance because the computer can get quite busy -->
     <param name="recovery_alpha_slow"       value="0.001"/>
     <param name="recovery_alpha_fast"       value="0.01"/>
+
+    <!-- <param name="first_map_only"            value="true"/> -->
     <!-- set amcl to suscribe to right to -->
+    <param name="global_frame_id"           value="/map"/>
+    <param name="odom_frame_id"             value="/odom"/> 
     <param name="base_frame_id"             value="/base_link"/> 
     <remap from="scan"                      to="/base_scan"/>
   </node>
