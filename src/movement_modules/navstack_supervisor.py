@@ -120,8 +120,9 @@ def callback(state):
     client.send_goal_and_wait(goal)
     print 'done waiting'
 
-    if client.get_result() == actionlib.GoalStatus.SUCCEEDED:
-        print 'reached goal'
+    print str(client.get_result())
+
+    if client.get_result() == actionlib.GoalStatus.SUCCEEDED:        
         state_pub.publish(state_machine.Actions.ARRIVED_AT_TABLE)
     else:
         print 'fail to reach goal'
