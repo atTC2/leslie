@@ -68,7 +68,7 @@ def action_callback(action_msg):
     """
     global current_state_id
 
-    action_taken = json.loads(str(action_msg)[6:])
+    action_taken = json.loads(action_msg.data)
     action_id = action_taken['id']
     action_data = action_taken['data']
 

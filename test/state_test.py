@@ -26,7 +26,7 @@ class StateMachineTestClass(unittest.TestCase):
             global callback_called
             global result_state_id
             callback_called += 1
-            state = json.loads(str(state_msg)[6:])
+            state = json.loads(state_msg.data)
             result_state_id = state['id']
 
         rospy.Subscriber('/state', String, callback, queue_size=1)
