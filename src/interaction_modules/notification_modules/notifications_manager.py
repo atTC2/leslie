@@ -11,7 +11,7 @@ import twitter_module
 def manage_notification(data):
     # The first 6 characters of a ROS message are 'data: ', which
     # can be removed so we can parse the rest of the message into JSON
-    data = json.loads(str(data)[6:])
+    data = json.loads(data.data)
 
     if data['send_beep']:
         beep_module.notify(data)
