@@ -11,6 +11,10 @@ with open(config_file_path, 'r') as f:
     Static strings in order to access the keys
 """
 KEY_VERSION = "version"
+KEY_EMAIL_ADDRESS = 'email_address'
+KEY_EMAIL_PASSWORD = 'email_password'
+KEY_EMAIL_SERVER = 'email_server'
+KEY_EMAIL_PORT = 'email_port'
 
 
 def get_config(key):
