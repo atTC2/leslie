@@ -1,8 +1,13 @@
 #!/bin/bash
 
+set -e
+
+# x is empty.
+x=''
+
 if [[ $EUID > 0 ]] ; then
   echo "Please run as root." >&2
-  exit
+  exit 1
 fi
 
 echo "Switching to ~/Documents to install there."
@@ -10,13 +15,17 @@ cd ~/Documents/
 
 echo "Downloading driver zip."
 wget http://www.orbbec3d.net/Tools_SDK_OpenNI/2-Linux.zip
-chown $SUDO_USER:$SUDO_USER 2-Linux.zip 
+if [ ! -z "${SUDO_USER+x}" ]; then
+  chown $SUDO_USER:$SUDO_USER 2-Linux.zip
+fi
 
 echo "Unzipping and changing directory."
 unzip 2-Linux.zip
 cd 2-Linux
 unzip OpenNI-Linux-x64-2.3.zip
-chown -R $SUDO_USER:$SUDO_USER ../2-Linux 
+if [ ! -z "${SUDO_USER+x}" ]; then
+  chown -R $SUDO_USER:$SUDO_USER ../2-Linux
+fi
 cd OpenNI-Linux-x64-2.3
 
 echo "Changing permissions and executing install script."
