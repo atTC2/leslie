@@ -3,12 +3,13 @@
 import unittest
 import rostest
 import rospy
+import json
 from std_msgs.msg import String
-from state_machine.state_machine import States, Actions
+from state_machine.state_machine import StateIDs, ActionIDs
 
 # Had to make these global so we could write tests
 callback_called = 0
-result_state = None
+result_state_id = None
 
 
 class StateMachineTestClass(unittest.TestCase):
@@ -18,24 +19,29 @@ class StateMachineTestClass(unittest.TestCase):
         state of 'move to table'
         """
         global callback_called
-        global result_state
+        global result_state_id
         callback_called = 0
 
         def callback(state_msg):
             global callback_called
-            global result_state
+            global result_state_id
             callback_called += 1
-            result_state = state_msg.data
+            state = json.loads(state_msg.data)
+            result_state_id = state['id']
 
         rospy.Subscriber('/state', String, callback, queue_size=1)
         pub = rospy.Publisher('/action', String, queue_size=1)
         # Ensures the publisher and subscriber have had time to register
         rospy.sleep(1)
-        pub.publish(Actions.CALLED_OVER)
+        action = {}
+        action['id'] = ActionIDs.CALLED_OVER
+        action['data'] = {}
+
+        pub.publish(json.dumps(action))
         rospy.sleep(1)
         self.assertEqual(callback_called, 1,
                          'Callback not called correct amount of times (' + str(callback_called) + ')')
-        self.assertEqual(result_state, States.MOVE_TO_TABLE, 'State not updated correctly (' + result_state + ')')
+        self.assertEqual(result_state_id, StateIDs.MOVE_TO_TABLE, 'State not updated correctly (' + result_state_id + ')')
 
 
 if __name__ == '__main__':
