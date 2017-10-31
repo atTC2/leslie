@@ -45,6 +45,7 @@ def publish_state(data):
     state['id'] = current_state_id
     state['data'] = data
     
+    print 'State:', state
     pub.publish(json.dumps(state))
 
 

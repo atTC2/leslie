@@ -3,6 +3,11 @@
 import face_recognition  # sudo pip install face_recognition
 import cv2
 import facial_utils
+import rospy
+from std_msgs.msg import String
+import json
+from state_machine.state_machine import StateIDs, ActionIDs
+import camera_node
 
 saved_encodings = facial_utils.get_known_faces()
 # TODO Add these in the configuration file
@@ -36,6 +41,7 @@ def identify(image):
 
     # Get rid of any duplicates
     indices = set(indices)
+    identified = []
 
     # Extract the original filenames using the indices of the matched faces
     if len(indices) > 0:
@@ -43,8 +49,10 @@ def identify(image):
         for index in indices:
             identified.append(facial_utils.get_matching_name(index))
         print "Identified: ", identified
-
-    return None
+    if identified == []:
+        return None
+    else:
+        return identified
 
 
 def detect(image):
@@ -66,6 +74,37 @@ def detect(image):
     return data
 
 
+pub = rospy.Publisher("/action", String, queue_size=1)
+
+
+def state_callback(state_msg):
+    print "state_msg: ", state_msg
+    state = json.loads(state_msg.data)
+    action = {}
+    action['data'] = {}
+    if state['id'] == StateIDs.AT_TABLE:
+        print "got into if statement"
+        result = camera_node.get_data_from_camera(detect, True)
+        print "result: ", result
+        action['id'] = ActionIDs.GOT_FACE
+        action['data']['current_owner'] = result[0]
+         
+    elif state['id'] in [StateIDs.LOCKED_AND_WAITING, StateIDs.ALARM]:
+        owner = state['data']['current_owner'] 
+        # result = camera_node.get_data_from_camera(detect, True)
+        # while owner not in result:
+        result = camera_node.get_data_from_camera(detect, True)
+        action['id'] = ActionIDs.FACE_RECOGNISED
+        action['data']['notify_owner'] = owner
+        action['data']['current_owner'] = ""
+    if action['data'] != {}:
+        pub.publish(json.dumps(action))
+
+
+rospy.Subscriber('/state', String, state_callback, queue_size=1)
+
+
 if __name__ == '__main__':
-    import camera_node
-    camera_node.get_data_from_camera(detect, True)
+    # camera_node.get_data_from_camera(detect, True)
+    rospy.init_node("facial_node")
+    rospy.spin()
