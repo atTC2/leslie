@@ -49,7 +49,7 @@ def callback(state_msg):
     :type state: std_msgs.msg.String
     """
     state_json = json.loads(state_msg.data)
-    if json.loads(state_json['id']) != state_machine.StateIDs.MOVE_TO_TABLE:
+    if state_json['id'] != state_machine.StateIDs.MOVE_TO_TABLE:
         return
 
     launch_move_base()
@@ -106,4 +106,4 @@ rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_siz
 if __name__ == '__main__':
     rospy.init_node('navstack_supervisor')
     state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 'table_1'}
-    callback(String(state_data))
+    callback(String(json.dumps(state_data)))
