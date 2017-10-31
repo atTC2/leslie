@@ -3,7 +3,7 @@ import cv2
 # 0 should be your in-build camera
 # 1 should be your external plugged-in camera
 # TODO : Move number to config
-SELECTED_VIDEO_INDEX = 1
+SELECTED_VIDEO_INDEX = 0
 
 
 def get_data_from_camera(camera_checker, colour):

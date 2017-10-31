@@ -12,7 +12,7 @@ def get_known_faces():
     them to encodings retrieved from the camera.
     """
     filenames = get_known_faces_filenames()
-
+    print "filename", filenames
     saved_encodings = []
 
     for filename in filenames:
