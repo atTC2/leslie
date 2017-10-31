@@ -49,7 +49,6 @@ table[4].position = Point(2.282, 5.741, 0)
 
 #  create action client, interface with navstack via client-server model
 client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-client.wait_for_server()  # blocks indefinitely
 
 
 def state_callback(state_msg):
@@ -68,6 +67,7 @@ def state_callback(state_msg):
     if state_json['id'] != states.MOVE_TO_TABLE:
         return
 
+    client.wait_for_server()  # blocks indefinitely
     #  creates goal, send to navstack server and waits for navstack to run
     goal = MoveBaseGoal()
     goal.target_pose.header.frame_id = "/map"
