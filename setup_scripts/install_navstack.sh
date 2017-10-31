@@ -1,9 +1,14 @@
 #!/bin/bash
 
+set -e
+
 if [[ $EUID > 0 ]] ; then
   echo "Please run as root." >&2
-  exit
+  exit 1
 fi
 
-printf "Installing move_base ros package and dependencies"
+echo "Installing amcl ros package"
+apt-get -y isntall ros-indigo-amcl
+
+echo "Installing move_base ros package"
 apt-get -y install ros-indigo-move-base

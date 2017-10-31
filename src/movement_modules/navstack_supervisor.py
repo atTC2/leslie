@@ -37,7 +37,7 @@ table_name = {'table_1': table[0],
               'table_5': table[4]}
 
 
-def callback(state):
+def callback(state_msg):
     """
     Runs if the current state is to MOVE_TO_TABLE.
     Launches the move_base launch file, which includes the navstack and amcl.
@@ -46,9 +46,10 @@ def callback(state):
     then waits for robot to reach that goal.
 
     :param state: The current state of the robot's State Machine
-    :type state: string (json)
+    :type state: std_msgs.msg.String
     """
-    if json.loads(state.id) != state_machine.StateIDs.MOVE_TO_TABLE:
+    state_json = json.loads(state_msg.data)
+    if json.loads(state_json['id']) != state_machine.StateIDs.MOVE_TO_TABLE:
         return
 
     launch_move_base()
@@ -60,7 +61,7 @@ def callback(state):
     #  creates goal, send to navstack server and waits for navstack to run
     goal = MoveBaseGoal()
     goal.target_pose.header.frame_id = "/map"
-    goal.target_pose.pose = table_name[json.loads(state.data)]
+    goal.target_pose.pose = table_name[state_json['data']]
     print str(goal.target_pose.pose)
     client.send_goal_and_wait(goal)
     print 'done waiting'
@@ -69,7 +70,7 @@ def callback(state):
     if client.get_state() == actionlib.GoalStatus.SUCCEEDED:
         print 'successfully reached goal'
         action_data = {'id': state_machine.ActionIDs.ARRIVED, 'data': ''}
-        state_pub.publish(json.dumps(action_data))
+        state_pub.publish(String(json.dumps(action_data)))
     else:
         print 'fail to reach goal'
 
@@ -105,4 +106,4 @@ rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_siz
 if __name__ == '__main__':
     rospy.init_node('navstack_supervisor')
     state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 'table_1'}
-    callback(state_data)
+    callback(String(state_data))
