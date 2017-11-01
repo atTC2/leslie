@@ -10,13 +10,20 @@ from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 from nav_msgs.srv import GetMap
 import actionlib
 
+#  --- Get info about static map from map_server
+
+#  waits for map_server, which should be launched beforehand
 rospy.wait_for_service('static_map')
 map_getter = rospy.ServiceProxy('static_map', GetMap)
 meta_data = map_getter().map.info
 map_origin = meta_data.origin
 map_resolution = meta_data.resolution
 
+#  --- --- --- ---
 
+#  --- Create the Pose for leslie at each table
+
+#  The orientation for leslie to face the table, taken from Rviz
 table_orientation = Quaternion(0.0, 0.0, -0.200032655658, 0.979789230738)
 table = []
 for i in range(5):
@@ -30,14 +37,18 @@ table[2].position = Point(0.193, 0.385, 0)
 table[3].position = Point(1.221, 3.015, 0)
 table[4].position = Point(2.282, 5.741, 0)
 
+#  Set table's name map to actual Pose at the table
 table_name = {'table_1': table[0],
               'table_2': table[1],
               'table_3': table[2],
               'table_4': table[3],
               'table_5': table[4]}
 
+#  --- --- --- --- --- ---
 
-def callback(state_msg):
+launch = None
+
+def state_callback(state_msg):
     """
     Runs if the current state is to MOVE_TO_TABLE.
     Launches the move_base launch file, which includes the navstack and amcl.
@@ -45,9 +56,10 @@ def callback(state_msg):
     which was included in the message published with the /state topic,
     then waits for robot to reach that goal.
 
-    :param state: The current state of the robot's State Machine
-    :type state: std_msgs.msg.String
+    :param state_msg: The current state of the robot's State Machine and data about table
+    :type state_msg: std_msgs.msg.String
     """
+    global launch, table_name
     state_json = json.loads(state_msg.data)
     if state_json['id'] != state_machine.StateIDs.MOVE_TO_TABLE:
         return
@@ -73,13 +85,15 @@ def callback(state_msg):
         state_pub.publish(String(json.dumps(action_data)))
     else:
         print 'fail to reach goal'
+        # TODO: Return home
 
+    launch.shutdown()
 
 def launch_move_base():
     """
     Launches the move_base launch file
     """
-
+    global launch
     # launch the .launch file for move_base (navstack)
     uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
     roslaunch.configure_logging(uuid)
@@ -100,10 +114,10 @@ def goal_callback(goal):
 
 
 state_pub = rospy.Publisher('/action', String, queue_size=1)
-rospy.Subscriber('/state', String, callback, queue_size=1)
+rospy.Subscriber('/state', String, state_callback, queue_size=1)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
 
 if __name__ == '__main__':
     rospy.init_node('navstack_supervisor')
     state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 'table_1'}
-    callback(String(json.dumps(state_data)))
+    state_callback(String(json.dumps(state_data)))

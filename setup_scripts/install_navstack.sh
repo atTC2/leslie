@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+trap 'exit' ERR
 
 if [[ $EUID > 0 ]] ; then
   echo "Please run as root." >&2
