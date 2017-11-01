@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 from std_msgs.msg import String
 import sys
@@ -82,3 +84,8 @@ def action_callback(action_msg):
 # Setup publisher for states and subscriber for actions
 pub = rospy.Publisher('/state', String, queue_size=1)
 rospy.Subscriber('/action', String, action_callback, queue_size=1)
+
+
+if __name__ == '__main__':
+    rospy.init_node('state_machine')
+    rospy.spin()
