@@ -1,3 +1,7 @@
 {
-    "version": "0.1"
+    "version": "0.1",
+    "email_address": "leslietherobot.aka.pips@gmail.com",
+    "email_password": "totallynottheactualthief",
+    "email_server": "smtp.gmail.com",
+    "email_port": 587
 }
