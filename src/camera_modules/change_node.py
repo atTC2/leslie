@@ -1,19 +1,26 @@
 #!/usr/bin/env python
 
 import cv2
+import os
+import subprocess
 from Queue import Queue
+from datetime import datetime
+from util_modules import config_access
 
-# TODO serious calibration of the below values at day/evening/night
 # Image pixels are BGR
-TABLE_MIN_RGB_THRESHOLD = [0, 120, 220]
-TABLE_MAX_RGB_THRESHOLD = [190, 255, 255]
+TABLE_MIN_BGR_THRESHOLD = config_access.get_config(config_access.KEY_TABLE_MIN_BGR_THRESHOLD)
+TABLE_MAX_BGR_THRESHOLD = config_access.get_config(config_access.KEY_TABLE_MAX_BGR_THRESHOLD)
 # Minimum percentage of the image that should be retained when cropping
-MIN_TABLE_WIDTH = 0.3
+MIN_TABLE_WIDTH = config_access.get_config(config_access.KEY_MIN_TABLE_WIDTH)
 
-FRAME_QUEUE_SIZE = 30
+FRAME_QUEUE_SIZE = config_access.get_config(config_access.KEY_FRAME_QUEUE_SIZE)
 previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
 crop_left = None
 crop_right = None
+
+VIDEO_OUTPUT_DIR = os.path.expanduser(config_access.get_config(config_access.KEY_VIDEO_OUTPUT_DIR))
+video_file = None
+video_writer = None
 
 
 def is_in_threshold_table(colour):
@@ -25,9 +32,9 @@ def is_in_threshold_table(colour):
     :rtype: bool
     """
     # Figure out if the colour is within the min/max threshold of being a table
-    diff_b = TABLE_MIN_RGB_THRESHOLD[0] <= colour[0] <= TABLE_MAX_RGB_THRESHOLD[0]
-    diff_g = TABLE_MIN_RGB_THRESHOLD[1] <= colour[1] <= TABLE_MAX_RGB_THRESHOLD[1]
-    diff_r = TABLE_MIN_RGB_THRESHOLD[2] <= colour[2] <= TABLE_MAX_RGB_THRESHOLD[2]
+    diff_b = TABLE_MIN_BGR_THRESHOLD[0] <= colour[0] <= TABLE_MAX_BGR_THRESHOLD[0]
+    diff_g = TABLE_MIN_BGR_THRESHOLD[1] <= colour[1] <= TABLE_MAX_BGR_THRESHOLD[1]
+    diff_r = TABLE_MIN_BGR_THRESHOLD[2] <= colour[2] <= TABLE_MAX_BGR_THRESHOLD[2]
     return diff_b and diff_g and diff_r
 
 
@@ -96,21 +103,23 @@ def crop_to_table(image):
     return image[:, crop_left:crop_right]
 
 
-def detect_change(image):
+def detect_change(original_image):
     """
     Detects change between the current image and the last.
     Some code inspired by https://gist.github.com/rrama/0bd1c29c8a1c1597b1eaf63847cecbf2
     TODO when integrated into main system, allow returning True/False
-    :param image: The image to compare to the previous (the method will return False if it is the first call)
-    :type image: numpy.ndarray
+    :param original_image: The image to compare to the previous (the method will return False if it is the first call)
+    :type original_image: numpy.ndarray
     :return: True is change was detected, False if not
     :rtype: bool
     """
     global previous_frames
     global crop_left
     global crop_right
+    global video_file
+    global video_writer
 
-    image = crop_to_table(image)
+    image = crop_to_table(original_image)
 
     # Convert the image to greyscale
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -138,15 +147,67 @@ def detect_change(image):
         changed = True
         # Compute the bounding box for the contour, draw it on the frame, and update the text
         x, y, w, h = cv2.boundingRect(contour)
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
     # Save the most recent frame
     previous_frames.put(grey)
 
-    # return changed # TODO when implemented properly, remove comment
+    # Add timestamp
+    vertical, _ = original_image.shape[:2]
+    cv2.putText(original_image, str(datetime.utcnow()), (0, vertical), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 1)
+
+    # Save the image if there was change
+    if changed:
+
+        if video_writer is None:
+            # Initialise the video writer
+            if video_file is None:
+                video_file = VIDEO_OUTPUT_DIR + str(datetime.utcnow()) + '.avi'
+                video_file = video_file.replace(' ', '_')
+
+            print 'Outputting to', video_file
+            vertical, horizontal = original_image.shape[:2]
+            video_writer = cv2.VideoWriter(video_file, cv2.cv.CV_FOURCC(*'XVID'), 20, (horizontal, vertical))
+
+        video_writer.write(original_image)
+
+        # return changed # TODO when implemented properly, remove comment
+
+
+def reset():
+    """
+    Resets all configured values to null and compressed video file if one was made
+    """
+    global crop_left
+    global crop_right
+    global previous_frames
+    global video_file
+    global video_writer
+
+    crop_left = None
+    crop_right = None
+    previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
+
+    if video_writer is not None:
+        video_writer.release()
+        video_writer = None
+
+    if video_file is not None:
+        # Compress the video
+        dev_null = open(os.devnull, 'w')
+        compress_result = subprocess.call(
+            ['HandBrakeCLI', '-i', video_file, '-o', video_file.replace('.avi', '.mp4'), '-e', 'x265', '-q', '20'],
+            stdout=dev_null, stderr=subprocess.STDOUT)
+
+        if compress_result == 0:
+            # Remove old file
+            os.remove(video_file)
+
+        video_file = None
 
 
 if __name__ == '__main__':
     import camera_node
 
-    camera_node.get_data_from_camera(detect_change, True)
+    camera_node.get_data_from_camera(config_access.get_config(config_access.KEY_CHANGE_CAMERA_INDEX), detect_change,
+                                     reset)
