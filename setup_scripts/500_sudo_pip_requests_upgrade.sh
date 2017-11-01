@@ -3,4 +3,4 @@
 trap 'exit' ERR
 
 # Upgrade PIP package to support emailing
-sudo pip install requests --upgrade
+pip install requests --upgrade
