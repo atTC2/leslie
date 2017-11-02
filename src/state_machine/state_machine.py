@@ -81,11 +81,9 @@ def action_callback(action_msg):
         print >> sys.stderr, 'Error updating state! Current state:', current_state_id, 'Action:', action_id
 
 
-# Setup publisher for states and subscriber for actions
-pub = rospy.Publisher('/state', String, queue_size=1)
-rospy.Subscriber('/action', String, action_callback, queue_size=1)
-
-
 if __name__ == '__main__':
+    # Setup publisher for states and subscriber for actions
+    pub = rospy.Publisher('/state', String, queue_size=1)
+    rospy.Subscriber('/action', String, action_callback, queue_size=1)
     rospy.init_node('state_machine')
     rospy.spin()
