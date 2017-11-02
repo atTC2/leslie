@@ -27,7 +27,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64
 ' >> ~/.bashrc
 
 # Let terminal know of the changes to the .bashrc file
-source .bashrc
+source ~/.bashrc
 
 apt-get update 
 
