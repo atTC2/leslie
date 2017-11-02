@@ -37,16 +37,10 @@ table[2].position = Point(0.193, 0.385, 0)
 table[3].position = Point(1.221, 3.015, 0)
 table[4].position = Point(2.282, 5.741, 0)
 
-#  Set table's name map to actual Pose at the table
-table_name = {'table_1': table[0],
-              'table_2': table[1],
-              'table_3': table[2],
-              'table_4': table[3],
-              'table_5': table[4]}
-
 #  --- --- --- --- --- ---
 
 launch = None
+
 
 def state_callback(state_msg):
     """
@@ -73,7 +67,7 @@ def state_callback(state_msg):
     #  creates goal, send to navstack server and waits for navstack to run
     goal = MoveBaseGoal()
     goal.target_pose.header.frame_id = "/map"
-    goal.target_pose.pose = table_name[state_json['data']]
+    goal.target_pose.pose = table[state_json['data']]
     print str(goal.target_pose.pose)
     client.send_goal_and_wait(goal)
     print 'done waiting'
@@ -88,6 +82,7 @@ def state_callback(state_msg):
         # TODO: Return home
 
     launch.shutdown()
+
 
 def launch_move_base():
     """
@@ -119,5 +114,5 @@ rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_siz
 
 if __name__ == '__main__':
     rospy.init_node('navstack_supervisor')
-    state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 'table_1'}
+    state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 1}
     state_callback(String(json.dumps(state_data)))
