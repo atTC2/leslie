@@ -6,6 +6,9 @@ trap 'exit' ERR
 
 # Install support for H.265
 add-apt-repository -y ppa:mc3man/trusty-media
-apt-get update
-apt-get dist-upgrade -y
-apt-get install -y vlc vlc-plugin-libde265
+echo 'Running `apt-get update`...'
+apt-get update -qq
+echo 'Running `apt-get dist-upgrade`...'
+apt-get dist-upgrade -qq
+echo 'Running `apt-get install vlc vlc-plugin-libde265`...'
+apt-get install -qq vlc vlc-plugin-libde265

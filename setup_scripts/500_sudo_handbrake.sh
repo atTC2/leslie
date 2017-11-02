@@ -4,6 +4,7 @@ trap 'exit' ERR
 
 # Install HandBrake
 add-apt-repository -y ppa:stebbins/handbrake-releases
-apt-get update
-apt-get install -y handbrake-gtk
-apt-get install -y handbrake-cli
+echo 'Running `apt-get update`...'
+apt-get update -qq
+echo 'Running `apt-get install handbrake-gtk handbrake-cli`...'
+apt-get install -qq handbrake-gtk handbrake-cli
