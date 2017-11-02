@@ -2,6 +2,8 @@ import smtplib
 import socket
 import requests.packages.urllib3
 from datetime import datetime
+
+from interaction_modules.user_info import get_user_info
 from util_modules import config_access
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -17,16 +19,24 @@ EMAIL_SERVER = config_access.get_config(config_access.KEY_EMAIL_SERVER)
 EMAIL_PORT = config_access.get_config(config_access.KEY_EMAIL_PORT)
 
 
-def send_report_email(name, recipient_address, file_path):
+def send_report_email(name, file_path):
     """
     Sends a report email for an incident, including the video recording
     :param name: The name of whom the report is being sent to
-    :param recipient_address: The email address of the recipient
     :param file_path: The path to the video file
     :type name: String
-    :type recipient_address: String
     :type file_path: String
     """
+    # Check if they have an email address
+    user_info = get_user_info(name)
+    if 'email_address' not in user_info:
+        # No email address
+        return
+
+    recipient_address = ['email_address']
+
+    # TODO ask the user if they want the email report
+
     # Get the incident time
     try:
         incident_time = str(datetime.fromtimestamp(getctime(file_path)))

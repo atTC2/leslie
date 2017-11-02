@@ -64,7 +64,7 @@ def action_callback(action_msg):
     """
     Sets a new state given the current state allows for the given action to be taken
     :param action_msg: The The message received from the 'action' topic
-    :type action_msg: std_msgs.String
+    :type action_msg: std_msgs.msg.String
     """
     global current_state_id
 

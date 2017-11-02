@@ -1,11 +1,26 @@
 #!/usr/bin/env python
 
+import json
+
 import cv2
 import os
 import subprocess
 from Queue import Queue
 from datetime import datetime
+
+import rospy
+from std_msgs.msg import String
+from state_machine.state_machine import StateIDs, ActionIDs
 from util_modules import config_access
+from interaction_modules.notification_modules import notifications_manager
+from interaction_modules.reporting_modules import email_report
+
+if __name__ != '__main__':
+    from sys import stderr
+
+    # No one should import this code (stops multiple identical nodes being started)
+    print >> stderr, 'change_node should not be imported'
+    exit(1)
 
 # Image pixels are BGR
 TABLE_MIN_BGR_THRESHOLD = config_access.get_config(config_access.KEY_TABLE_MIN_BGR_THRESHOLD)
@@ -13,14 +28,21 @@ TABLE_MAX_BGR_THRESHOLD = config_access.get_config(config_access.KEY_TABLE_MAX_B
 # Minimum percentage of the image that should be retained when cropping
 MIN_TABLE_WIDTH = config_access.get_config(config_access.KEY_MIN_TABLE_WIDTH)
 
+# Frame information
 FRAME_QUEUE_SIZE = config_access.get_config(config_access.KEY_FRAME_QUEUE_SIZE)
 previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
 crop_left = None
 crop_right = None
 
+# Video recording information
 VIDEO_OUTPUT_DIR = os.path.expanduser(config_access.get_config(config_access.KEY_VIDEO_OUTPUT_DIR))
 video_file = None
 video_writer = None
+
+# State information
+running = False
+state_id = None
+state_data = None
 
 
 def is_in_threshold_table(colour):
@@ -118,6 +140,8 @@ def detect_change(original_image):
     global crop_right
     global video_file
     global video_writer
+    global state_data
+    global pub
 
     image = crop_to_table(original_image)
 
@@ -128,8 +152,10 @@ def detect_change(original_image):
     # If the queue isn't full, add this frame to the queue and say 'no changes'
     if not previous_frames.full():
         previous_frames.put(grey)
-        # return False # TODO when implemented properly, remove comment
-        return None
+        return False
+    elif state_id == StateIDs.LOCKING:
+        # Now locked, say so
+        pub.publish(json.dumps({'id': ActionIDs.READY_TO_LOCK, 'data': state_data}))
 
     # Compute the absolute difference between the current frame and first frame
     frame_delta = cv2.absdiff(previous_frames.get(), grey)
@@ -158,7 +184,6 @@ def detect_change(original_image):
 
     # Save the image if there was change
     if changed:
-
         if video_writer is None:
             # Initialise the video writer
             if video_file is None:
@@ -171,18 +196,24 @@ def detect_change(original_image):
 
         video_writer.write(original_image)
 
-        # return changed # TODO when implemented properly, remove comment
+    return changed
 
 
-def reset():
+def reset(cap):
     """
-    Resets all configured values to null and compressed video file if one was made
+    Resets all configured values to null and handles video file compress and reporting if an alarm was triggered
+    :param cap: The frame capture object
+    :type cap: VideoCapture
     """
     global crop_left
     global crop_right
     global previous_frames
     global video_file
     global video_writer
+
+    # Release capture and destroy windows
+    cap.release()
+    cv2.destroyAllWindows()
 
     crop_left = None
     crop_right = None
@@ -203,11 +234,82 @@ def reset():
             # Remove old file
             os.remove(video_file)
 
+            # We know the video is compressed, and not being written to, so we can send it here
+            email_report.send_report_email(state_data['name'], video_file.replace('.avi', '.mp4'))
+        else:
+            # Compression failed, try with the other video anyway
+            email_report.send_report_email(state_data['name'], video_file)
+
         video_file = None
 
 
-if __name__ == '__main__':
-    import camera_node
+def run():
+    """
+    Runs the change detector code (finding table, watching table, sending alerts, clean up)
+    """
+    global running
+    global pub
+    global state_data
 
-    camera_node.get_data_from_camera(config_access.get_config(config_access.KEY_CHANGE_CAMERA_INDEX), detect_change,
-                                     reset)
+    cap = cv2.VideoCapture(config_access.get_config(config_access.KEY_CHANGE_CAMERA_INDEX))
+
+    running = True
+    while running:
+        # Get the current frame
+        ret, frame = cap.read()
+
+        # Apply the method
+        changed = detect_change(frame)
+
+        if changed and state_id == StateIDs.LOCKED_AND_WAITING:
+            # publish alarm
+            pub.publish(json.dumps({'id': ActionIDs.MOVEMENT_DETECTED, 'data': state_data}))
+
+        # Make and publish the frame
+        cv2.imshow('frame', frame)
+        cv2.waitKey(1)
+
+    # No longer running, reset
+    reset(cap)
+
+
+def callback(state_msg):
+    """
+    Processes updates to state information
+    :param state_msg: The new state information
+    :type state_msg: std_msgs.msg.String
+    """
+    global running
+    global state_id
+    global state_data
+
+    state_json = json.loads(state_msg.data)
+    state_id = state_json['id']
+    state_data = state_json['data']
+
+    if state_id == StateIDs.LOCKING:
+        # Start finding table...
+        run()
+    elif state_id == StateIDs.LOCKED_AND_WAITING:
+        # Do nothing (continue running)
+        pass
+    elif state_id == StateIDs.ALARM:
+        # Start alarm
+        notifications_manager.manage_notification(state_data['name'])
+    else:
+        # Stop running (code will automatically clean up)
+        running = False
+
+
+# ROS node stuff
+rospy.init_node('change_node')
+rospy.Subscriber('/state', String, callback, queue_size=1)
+pub = rospy.Publisher('/action', String, queue_size=1)
+
+# TESTING
+# from state_machine import state_machine
+#
+# state_machine.current_state_id = StateIDs.LOCKING
+# callback(String(json.dumps({'id': StateIDs.LOCKING, 'data': {'name': 'Ben and Tom'}})))
+
+rospy.spin()
