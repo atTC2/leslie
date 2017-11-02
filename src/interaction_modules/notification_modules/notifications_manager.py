@@ -1,31 +1,56 @@
 #!/usr/bin/env python
 
+import json
+
 import rospy
 from std_msgs.msg import String
-import json
+
 import beep_module
 import email_module
 import twitter_module
+from state_machine import states
+from util_modules.people_info import get_user_info
+
+if __name__ != '__main__':
+    from sys import stderr
+
+    # No one should import this code (stops multiple identical nodes being started)
+    print >> stderr, __name__, 'should not be imported!'
+    exit(1)
 
 
-def manage_notification(data):
-    # The first 6 characters of a ROS message are 'data: ', which
-    # can be removed so we can parse the rest of the message into JSON
-    data = json.loads(data.data)
+def manage_notification(notify_owner):
+    """
+    Sends alarm notifications to the owner and plays out a message
+    :param notify_owner: The identifier of the owner
+    :type notify_owner: String
+    """
+    # Get someones info from json
+    data = get_user_info(notify_owner)
 
-    if data['send_beep']:
-        beep_module.notify(data)
-    if data['send_email']:
-        email_module.notify(data)
-    if data['send_tweet']:
-        twitter_module.notify(data)
+    # Beep
+    beep_module.notify()
+
+    # Twitter
+    if 'twitter' in data:
+        twitter_module.notify(data['twitter'])
+    # Email
+    if 'email_address' in data:
+        email_module.notify(notify_owner, data['email_address'])
 
 
-def start_listen():
-    rospy.init_node('notifications_node', anonymous=True)
-    rospy.Subscriber('notifier', String, manage_notification)
-    rospy.spin()
+def state_callback(state_msg):
+    state_json = json.loads(state_msg.data)
+    state_id = state_json['id']
+    state_data = state_json['data']
+    
+    if state_id != states.ALARM:
+        return
+    
+    owner_name = state_data['current_owner']
+    manage_notification(owner_name)
+    
 
-
-if __name__ == '__main__':
-    start_listen()
+rospy.init_node('notifications_manager')
+rospy.Subscriber('/state', String, state_callback, queue_size=1)
+rospy.spin()
