@@ -125,5 +125,6 @@ if __name__ == '__main__':
     state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 0}
     #state_data = {'id': state_machine.StateIDs.MOVE_TO_HOME, 'data': ''}
     state_callback(String(json.dumps(state_data)))
+    rospy.spin()
 
-rospy.spin()
+
