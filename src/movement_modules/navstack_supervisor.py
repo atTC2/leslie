@@ -31,11 +31,12 @@ for i in range(5):
     p.orientation = table_orientation
     table.append(p)
 
-table[0].position = Point(-2.03, -4.8, 0)
-table[1].position = Point(-1.09, -1.957, 0)
-table[2].position = Point(0.193, 0.385, 0)
-table[3].position = Point(1.221, 3.015, 0)
-table[4].position = Point(2.282, 5.741, 0)
+# positions are taken from rviz
+table[0].position = Point(-1.75060284138, -4.99175453186, 0)
+table[1].position = Point(-0.678676903248, -2.35280752182, 0)
+table[2].position = Point(0.39291536808, 0.249539896846, 0)
+table[3].position = Point(1.50023245811, 2.81623911858, 0)
+table[4].position = Point(2.67847919464, 5.56012153625, 0)
 
 #  --- --- --- --- --- ---
 
@@ -111,8 +112,9 @@ def goal_callback(goal):
 state_pub = rospy.Publisher('/action', String, queue_size=1)
 rospy.Subscriber('/state', String, state_callback, queue_size=1)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
-
+rospy.init_node('navstack_supervisor')
 if __name__ == '__main__':
-    rospy.init_node('navstack_supervisor')
     state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 1}
-    state_callback(String(json.dumps(state_data)))
+    #state_callback(String(json.dumps(state_data)))
+
+rospy.spin()
