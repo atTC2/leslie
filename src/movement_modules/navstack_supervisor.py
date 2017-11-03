@@ -41,8 +41,8 @@ table[4].position = Point(2.67847919464, 5.56012153625, 0)
 #  --- --- --- --- --- ---
 
 home_pose = Pose()
-home_pose.position = Point(-2.60803842545, -2.60803842545)
-home_pose.orientation = table_orientation #  face same way as table
+home_pose.position = Point(-1.38991832733, -9.28993225098, 0)
+home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
 
 launch = None
 
@@ -63,7 +63,7 @@ def state_callback(state_msg):
     # determine goal based on state
     if state_json['id'] == state_machine.StateIDs.MOVE_TO_TABLE:
         goal.target_pose.pose = table[state_json['data']]
-    if state_json['id'] == state_machine.StateIDs.MOVE_TO_HOME:
+    elif state_json['id'] == state_machine.StateIDs.MOVE_TO_HOME:
         goal.target_pose.pose = home_pose
     else:
         return
@@ -122,7 +122,8 @@ rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_siz
 rospy.init_node('navstack_supervisor')
 
 if __name__ == '__main__':
-    state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 1}
+    state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 0}
+    #state_data = {'id': state_machine.StateIDs.MOVE_TO_HOME, 'data': ''}
     state_callback(String(json.dumps(state_data)))
 
 rospy.spin()
