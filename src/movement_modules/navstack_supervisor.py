@@ -40,23 +40,32 @@ table[4].position = Point(2.67847919464, 5.56012153625, 0)
 
 #  --- --- --- --- --- ---
 
-launch = None
+home_pose = Pose()
+home_pose.position = Point(-2.60803842545, -2.60803842545)
+home_pose.orientation = table_orientation #  face same way as table
 
+launch = None
 
 def state_callback(state_msg):
     """
-    Runs if the current state is to MOVE_TO_TABLE.
+    Runs if the current state is to MOVE_TO_TABLE or MOVE_TO_HOME
     Launches the move_base launch file, which includes the navstack and amcl.
-    sends the navstack a goal
-    which was included in the message published with the /state topic,
+    sends the navstack a goal, which is either a table or home where
+    table was included in the message published with the /state topic,
     then waits for robot to reach that goal.
 
-    :param state_msg: The current state of the robot's State Machine and data about table
+    :param state_msg: The current state of the robot's State Machine and data about table if applicable
     :type state_msg: std_msgs.msg.String
     """
-    global launch, table_name
+    global launch, table_name, home_pose
     state_json = json.loads(state_msg.data)
-    if state_json['id'] != state_machine.StateIDs.MOVE_TO_TABLE:
+    goal = MoveBaseGoal()
+    # determine goal based on state
+    if state_json['id'] == state_machine.StateIDs.MOVE_TO_TABLE:
+        goal.target_pose.pose = table[state_json['data']]
+    if state_json['id'] == state_machine.StateIDs.MOVE_TO_HOME:
+        goal.target_pose.pose = home_pose
+    else:
         return
 
     launch_move_base()
@@ -65,10 +74,8 @@ def state_callback(state_msg):
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     client.wait_for_server()  # blocks indefinitely
 
-    #  creates goal, send to navstack server and waits for navstack to run
-    goal = MoveBaseGoal()
-    goal.target_pose.header.frame_id = "/map"
-    goal.target_pose.pose = table[state_json['data']]
+    #  send goal to navstack server and waits for navstack to run    
+    goal.target_pose.header.frame_id = "/map"    
     print str(goal.target_pose.pose)
     client.send_goal_and_wait(goal)
     print 'done waiting'
@@ -113,8 +120,9 @@ state_pub = rospy.Publisher('/action', String, queue_size=1)
 rospy.Subscriber('/state', String, state_callback, queue_size=1)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
 rospy.init_node('navstack_supervisor')
+
 if __name__ == '__main__':
     state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 1}
-    #state_callback(String(json.dumps(state_data)))
+    state_callback(String(json.dumps(state_data)))
 
 rospy.spin()
