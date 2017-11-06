@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+  <!-- Run nodes -->
+  <!-- No required nodes -->
+  
+  <!-- Run tests -->
+  <test test-name="config_test" pkg="leslie" type="config_test.py" />
+</launch>

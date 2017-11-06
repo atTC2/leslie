@@ -4,11 +4,11 @@ import rospy
 import roslaunch
 import json
 from std_msgs.msg import String
-from state_machine import state_machine
 from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
 from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 from nav_msgs.srv import GetMap
 import actionlib
+from state_machine import states, actions
 
 #  --- Get info about static map from map_server
 
@@ -55,7 +55,7 @@ def state_callback(state_msg):
     """
     global launch, table_name
     state_json = json.loads(state_msg.data)
-    if state_json['id'] != state_machine.StateIDs.MOVE_TO_TABLE:
+    if state_json['id'] != states.MOVE_TO_TABLE:
         return
 
     launch_move_base()
@@ -75,7 +75,7 @@ def state_callback(state_msg):
     #  after navstack completes, get its 'state' and check if reached goal
     if client.get_state() == actionlib.GoalStatus.SUCCEEDED:
         print 'successfully reached goal'
-        action_data = {'id': state_machine.ActionIDs.ARRIVED, 'data': ''}
+        action_data = {'id': actions.ARRIVED, 'data': ''}
         state_pub.publish(String(json.dumps(action_data)))
     else:
         print 'fail to reach goal'
@@ -114,5 +114,5 @@ rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_siz
 
 if __name__ == '__main__':
     rospy.init_node('navstack_supervisor')
-    state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 1}
+    state_data = {'id': states.MOVE_TO_TABLE, 'data': 1}
     state_callback(String(json.dumps(state_data)))

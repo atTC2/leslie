@@ -1,3 +1,6 @@
+*.launch linguist-language=XML
+*.test linguist-language=XML
+
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.pgm filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
