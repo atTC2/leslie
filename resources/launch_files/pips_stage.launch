@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+  <param name="/use_sim_time" value="true"/>
+  
+  <arg name="rviz_config_file" default="laser_and_particles.rviz"/>
+  
+  <include file="$(find leslie)/resources/launch_files/pips_base.launch" pass_all_args="true"/>
+
+  <!-- Run stage -->
+  <node pkg="stage_ros" type="stageros" name="stageros" args="$(find leslie)/resources/maps/newlowerground.world" respawn="false">
+    <param name="base_watchdog_timeout" value="0.2"/>
+  </node>
+</launch>

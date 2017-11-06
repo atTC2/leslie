@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+  <param name="/p2os/port" value="/dev/USB0" />
+  
+  <arg name="rviz_config_file" default="particles_only.rviz"/>
+  
+  <include file="$(find leslie)/resources/launch_files/pips_base.launch" />
+</launch>

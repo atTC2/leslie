@@ -4,23 +4,18 @@
   <param name="linear_speed" value="2" />
   <param name="delta" value="0.05" />
   <param name="configurations" value="$(find leslie)/resources/configurations/leslie.json" />
-  <param name="/use_sim_time" value="true"/>
-
+  
+  <arg name="rviz_config_file" default="laser_and_particles.rviz"/>
   <arg name="map_file" default="$(find leslie)/resources/maps/newlowerground.yaml"/>
 
   <!-- Run the map server -->
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
 
-  <!-- Run stage -->
-  <node pkg="stage_ros" type="stageros" name="stageros" args="$(find leslie)/resources/maps/newlowerground.world" respawn="false">
-    <param name="base_watchdog_timeout" value="0.2"/>
-  </node>
-
   <!-- Publish a static transformation between /map and /odom -->
   <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100"/>
 
   <!-- Run rviz -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find leslie)/resources/rviz_configs/laser_and_particles.rviz" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find leslie)/resources/rviz_configs/$(arg rviz_config_file)" />
 
   <!-- Run nodes -->
   <node name="state_machine" pkg="leslie" type="state_machine.py" output="screen" />
