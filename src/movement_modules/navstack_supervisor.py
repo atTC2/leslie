@@ -116,15 +116,16 @@ def goal_callback(goal):
     print str(goal)
 
 
-state_pub = rospy.Publisher('/action', String, queue_size=1)
-rospy.Subscriber('/state', String, state_callback, queue_size=1)
-rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
-rospy.init_node('navstack_supervisor')
+
 
 if __name__ == '__main__':
+    state_pub = rospy.Publisher('/action', String, queue_size=1)
+    rospy.Subscriber('/state', String, state_callback, queue_size=1)
+    rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
+    rospy.init_node('navstack_supervisor')
     state_data = {'id': state_machine.StateIDs.MOVE_TO_TABLE, 'data': 0}
     #state_data = {'id': state_machine.StateIDs.MOVE_TO_HOME, 'data': ''}
-    state_callback(String(json.dumps(state_data)))
+    #state_callback(String(json.dumps(state_data)))
     rospy.spin()
 
 
