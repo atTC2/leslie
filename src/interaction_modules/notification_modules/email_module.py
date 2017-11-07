@@ -1,21 +1,25 @@
-import smtplib
-import requests.packages.urllib3
-requests.packages.urllib3.disable_warnings()
-
-# TODO: Move to configuration file
-ROBOT_EMAIL_ADDRESS = 'leslietherobot.aka.pips@gmail.com'
-ROBOT_PASSWORD = 'totallynottheactualthief'
+from datetime import datetime
+from interaction_modules.email_util import create_email, send_email, attach_body
 
 
-def notify(data):
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(ROBOT_EMAIL_ADDRESS, ROBOT_PASSWORD)
+def notify(notify_owner, recipient_address):
+    """
+    Sends a notification email of a triggered alarm
+    :param notify_owner: The name of whom the report is being sent to
+    :param recipient_address: The email address of the recipient
+    :type notify_owner: String
+    :type recipient_address: String
+    """
 
-    server.sendmail(ROBOT_EMAIL_ADDRESS,
-                    data['email_address'],
-                    data['email_text_content'])
+    # Create the message
+    msg = create_email(recipient_address, 'PIPS Alarm @ ' + str(datetime.now()))
 
-    print ("Email sent to " + data['email_address'])
+    # Attach the text
+    text_content = 'Hello ' + notify_owner + '.\r\n\r\n'
+    text_content += 'An alarm has been triggered at your table at ' + str(datetime.now()) + '.\r\n\r\n'
+    text_content += 'Kind regards,\r\nLeslie (Personal Item Protection System)'
+    attach_body(msg, text_content)
 
-    server.quit()
+    # Send the email
+    send_email(recipient_address, msg)
+
