@@ -19,6 +19,7 @@
 
   <!-- Run nodes -->
   <node name="state_machine" pkg="leslie" type="state_machine.py" output="screen" />
+  <include file="$(find leslie)/resources/launch_files/move_base.launch" />
   
   <!-- Run RQT Graph -->
   <!--

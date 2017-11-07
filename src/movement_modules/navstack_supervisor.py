@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 
-import rospy
-import roslaunch
 import json
-from std_msgs.msg import String
-from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
-from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
-from nav_msgs.srv import GetMap
+
 import actionlib
+import rospy
+from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
+from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
+from nav_msgs.srv import GetMap
+from std_msgs.msg import String
+
 from state_machine import states, actions
+
+if __name__ != '__main__':
+    from sys import stderr
+    # No one should import this code (stops multiple identical nodes being started)
+    print >> stderr, __name__, 'should not be imported!'
+    exit(1)
+
 
 #  --- Get info about static map from map_server
 
@@ -39,7 +47,9 @@ table[4].position = Point(2.282, 5.741, 0)
 
 #  --- --- --- --- --- ---
 
-launch = None
+#  create action client, interface with navstack via client-server model
+client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+client.wait_for_server()  # blocks indefinitely
 
 
 def state_callback(state_msg):
@@ -53,21 +63,15 @@ def state_callback(state_msg):
     :param state_msg: The current state of the robot's State Machine and data about table
     :type state_msg: std_msgs.msg.String
     """
-    global launch, table_name
+    global client
     state_json = json.loads(state_msg.data)
     if state_json['id'] != states.MOVE_TO_TABLE:
         return
 
-    launch_move_base()
-
-    #  create action client, interface with navstack via client-server model
-    client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-    client.wait_for_server()  # blocks indefinitely
-
     #  creates goal, send to navstack server and waits for navstack to run
     goal = MoveBaseGoal()
     goal.target_pose.header.frame_id = "/map"
-    goal.target_pose.pose = table[state_json['data']]
+    goal.target_pose.pose = table[state_json['data']['tableID']]
     print str(goal.target_pose.pose)
     client.send_goal_and_wait(goal)
     print 'done waiting'
@@ -81,21 +85,6 @@ def state_callback(state_msg):
         print 'fail to reach goal'
         # TODO: Return home
 
-    launch.shutdown()
-
-
-def launch_move_base():
-    """
-    Launches the move_base launch file
-    """
-    global launch
-    # launch the .launch file for move_base (navstack)
-    uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-    roslaunch.configure_logging(uuid)
-    # path need to be set correctly depending on machine
-    launch = roslaunch.parent.ROSLaunchParent(uuid, ['./launch/move_base.launch'])
-    launch.start()
-
 
 def goal_callback(goal):
     """
@@ -108,11 +97,13 @@ def goal_callback(goal):
     print str(goal)
 
 
-state_pub = rospy.Publisher('/action', String, queue_size=1)
-rospy.Subscriber('/state', String, state_callback, queue_size=1)
+rospy.init_node('navstack_supervisor')
+state_pub = rospy.Publisher('/action', String, queue_size=10)
+rospy.Subscriber('/state', String, state_callback, queue_size=10)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
 
-if __name__ == '__main__':
-    rospy.init_node('navstack_supervisor')
-    state_data = {'id': states.MOVE_TO_TABLE, 'data': 1}
-    state_callback(String(json.dumps(state_data)))
+# TESTING
+# state_data = {'id': states.MOVE_TO_TABLE, 'data': {'tableID': 1}}
+# state_callback(String(json.dumps(state_data)))
+
+rospy.spin()
