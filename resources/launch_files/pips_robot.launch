@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
   <param name="/p2os/port" value="/dev/USB0" />
+  <param name="/use_sim_time" value="false"/>
   
   <arg name="rviz_config_file" default="particles_only.rviz"/>
   

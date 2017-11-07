@@ -29,8 +29,8 @@ class StateMachineTestClass(unittest.TestCase):
             state = json.loads(state_msg.data)
             result_state_id = state['id']
 
-        rospy.Subscriber('/state', String, state_callback, queue_size=1)
-        pub = rospy.Publisher('/action', String, queue_size=1)
+        rospy.Subscriber('/state', String, state_callback, queue_size=10)
+        pub = rospy.Publisher('/action', String, queue_size=10)
         # Ensures the publisher and subscriber have had time to register
         rospy.sleep(1)
         action = {}
