@@ -94,7 +94,7 @@ def state_callback(state_msg):
         action['id'] = actions.GOT_FACE
         action['data']['current_owner'] = result[0]
         
-    elif state['id'] in [states.LOCKED_AND_WAITING, states.ALARM]:
+    elif state['id'] == states.LOCKED_AND_WAITING:
         owner = state['data']['current_owner']
         rospy.sleep(30)
         result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
@@ -108,6 +108,6 @@ def state_callback(state_msg):
 
 
 rospy.init_node("facial_node")
-pub = rospy.Publisher("/action", String, queue_size=1)
-rospy.Subscriber('/state', String, state_callback, queue_size=1)
+pub = rospy.Publisher("/action", String, queue_size=10)
+rospy.Subscriber('/state', String, state_callback, queue_size=10)
 rospy.spin()
