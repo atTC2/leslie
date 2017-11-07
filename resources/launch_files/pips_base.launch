@@ -20,6 +20,7 @@
   <!-- Run nodes -->
   <node name="state_machine" pkg="leslie" type="state_machine.py" output="screen" />
   <include file="$(find leslie)/resources/launch_files/move_base.launch" />
+  <node name="navstack_supervisor" pkg="leslie" type="navstack_supervisor.py" output="screen" />
   
   <!-- Run RQT Graph -->
   <!--

@@ -68,7 +68,7 @@ def action_callback(action_msg):
 
 
 # Setup publisher for states and subscriber for actions
+rospy.init_node('state_machine')
 pub = rospy.Publisher('/state', String, queue_size=10)
 rospy.Subscriber('/action', String, action_callback, queue_size=10)
-rospy.init_node('state_machine')
 rospy.spin()
