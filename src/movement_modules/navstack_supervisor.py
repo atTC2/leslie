@@ -81,7 +81,7 @@ def state_callback(state_msg):
         return
 
     client.wait_for_server()  # blocks indefinitely
-    #  creates goal
+    #  creates goal, send to navstack server and waits for navstack to run
     goal = MoveBaseGoal()
     #  send goal to navstack server and waits for navstack to run
     goal.target_pose.header.frame_id = "/map"
