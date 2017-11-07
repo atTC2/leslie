@@ -129,7 +129,7 @@ def run():
     global pub
     global state_data
 
-    cap = cv2.VideoCapture(config_access.get_config(config_access.KEY_CHANGE_CAMERA_INDEX))
+    cap = cv2.VideoCapture(config_access.get_config(config_access.KEY_CAMERA_INDEX_TABLE))
 
     running = True
     while running:

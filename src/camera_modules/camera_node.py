@@ -1,15 +1,13 @@
 import cv2
 
 
-def get_data_from_camera(camera_index, camera_checker, reset_func):
+def get_data_from_camera(camera_index, camera_checker):
     """
     Gets a camera and processes the frames with the function given
     :param camera_index: The camera to get frames from
     :param camera_checker: Image processing function
-    :param reset_func: Reset function to call when the video closes
     :type camera_index: int
     :type camera_checker: (numpy.ndarray) -> T
-    :type reset_func: () -> None
     :return: data (currently always None)
     :rtype: T
     """
@@ -35,8 +33,6 @@ def get_data_from_camera(camera_index, camera_checker, reset_func):
     # to some sort of an init method later on
     cap.release()
     cv2.destroyAllWindows()
-    if reset_func is not None:
-        reset_func()
 
     # Return whatever data was found through the camera_checker method
     # passed for further planning/decision making
