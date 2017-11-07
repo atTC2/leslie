@@ -1,0 +1,136 @@
+Language model created by QuickLM on Thu Nov  2 09:47:54 EDT 2017
+Copyright (c) 1996-2010 Carnegie Mellon University and Alexander I. Rudnicky
+
+The model is in standard ARPA format, designed by Doug Paul while he was at MITRE.
+
+The code that was used to produce this language model is available in Open Source.
+Please visit http://www.speech.cs.cmu.edu/tools/ for more information
+
+The (fixed) discount mass is 0.5. The backoffs are computed using the ratio method.
+This model based on a corpus of 32 sentences and 24 words
+
+\data\
+ngram 1=24
+ngram 2=44
+ngram 3=44
+
+\1-grams:
+-1.0160 </s> -0.3010
+-1.0160 <s> -0.2239
+-2.2201 BEN -0.2570
+-2.2201 CAMERON -0.2570
+-2.2201 CHRYSTAL -0.2570
+-2.0440 FIVE -0.2570
+-2.0440 FOUR -0.2570
+-1.7430 GO -0.2931
+-1.6760 HELLO -0.2823
+-2.5211 HOME -0.2570
+-2.2201 HUNG -0.2570
+-1.3750 IS -0.2823
+-2.2201 LESLIE -0.2570
+-1.3750 MY -0.2823
+-1.3750 NAME -0.2823
+-2.5211 NO -0.2570
+-2.0440 ONE -0.2570
+-2.2201 SEB -0.2570
+-1.5211 TABLE -0.2810
+-2.0440 THREE -0.2570
+-1.8222 TO -0.2877
+-2.2201 TOM -0.2570
+-2.0440 TWO -0.2570
+-2.5211 YES -0.2570
+
+\2-grams:
+-1.8062 <s> FIVE 0.0000
+-1.8062 <s> FOUR 0.0000
+-1.0280 <s> GO 0.0000
+-0.9611 <s> HELLO 0.0000
+-0.9611 <s> MY 0.0000
+-1.8062 <s> NO 0.0000
+-1.8062 <s> ONE 0.0000
+-1.1072 <s> TABLE 0.0000
+-1.8062 <s> THREE 0.0000
+-1.8062 <s> TWO 0.0000
+-1.8062 <s> YES 0.0000
+-0.3010 BEN </s> -0.3010
+-0.3010 CAMERON </s> -0.3010
+-0.3010 CHRYSTAL </s> -0.3010
+-0.3010 FIVE </s> -0.3010
+-0.3010 FOUR </s> -0.3010
+-1.0792 GO HOME 0.0000
+-0.3802 GO TO 0.0000
+-0.3010 HELLO MY 0.0000
+-0.3010 HOME </s> -0.3010
+-0.3010 HUNG </s> -0.3010
+-1.1461 IS BEN 0.0000
+-1.1461 IS CAMERON 0.0000
+-1.1461 IS CHRYSTAL 0.0000
+-1.1461 IS HUNG 0.0000
+-1.1461 IS LESLIE 0.0000
+-1.1461 IS SEB 0.0000
+-1.1461 IS TOM 0.0000
+-0.3010 LESLIE </s> -0.3010
+-0.3010 MY NAME 0.0000
+-0.3010 NAME IS -0.0000
+-0.3010 NO </s> -0.3010
+-0.3010 ONE </s> -0.3010
+-0.3010 SEB </s> -0.3010
+-1.0000 TABLE FIVE 0.0000
+-1.0000 TABLE FOUR 0.0000
+-1.0000 TABLE ONE 0.0000
+-1.0000 TABLE THREE 0.0000
+-1.0000 TABLE TWO 0.0000
+-0.3010 THREE </s> -0.3010
+-0.3010 TO TABLE 0.0000
+-0.3010 TOM </s> -0.3010
+-0.3010 TWO </s> -0.3010
+-0.3010 YES </s> -0.3010
+
+\3-grams:
+-0.3010 <s> FIVE </s>
+-0.3010 <s> FOUR </s>
+-1.0792 <s> GO HOME
+-0.3802 <s> GO TO
+-0.3010 <s> HELLO MY
+-0.3010 <s> MY NAME
+-0.3010 <s> NO </s>
+-0.3010 <s> ONE </s>
+-1.0000 <s> TABLE FIVE
+-1.0000 <s> TABLE FOUR
+-1.0000 <s> TABLE ONE
+-1.0000 <s> TABLE THREE
+-1.0000 <s> TABLE TWO
+-0.3010 <s> THREE </s>
+-0.3010 <s> TWO </s>
+-0.3010 <s> YES </s>
+-0.3010 GO HOME </s>
+-0.3010 GO TO TABLE
+-0.3010 HELLO MY NAME
+-0.3010 IS BEN </s>
+-0.3010 IS CAMERON </s>
+-0.3010 IS CHRYSTAL </s>
+-0.3010 IS HUNG </s>
+-0.3010 IS LESLIE </s>
+-0.3010 IS SEB </s>
+-0.3010 IS TOM </s>
+-0.3010 MY NAME IS
+-1.1461 NAME IS BEN
+-1.1461 NAME IS CAMERON
+-1.1461 NAME IS CHRYSTAL
+-1.1461 NAME IS HUNG
+-1.1461 NAME IS LESLIE
+-1.1461 NAME IS SEB
+-1.1461 NAME IS TOM
+-0.3010 TABLE FIVE </s>
+-0.3010 TABLE FOUR </s>
+-0.3010 TABLE ONE </s>
+-0.3010 TABLE THREE </s>
+-0.3010 TABLE TWO </s>
+-1.0000 TO TABLE FIVE
+-1.0000 TO TABLE FOUR
+-1.0000 TO TABLE ONE
+-1.0000 TO TABLE THREE
+-1.0000 TO TABLE TWO
+
+\end\
+

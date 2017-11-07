@@ -1,8 +1,8 @@
 {
     "version": "0.1",
     "change_camera_index": 0,
-    "table_min_bgr_threshold": [0, 120, 220],
-    "table_max_bgr_threshold": [190, 255, 255],
+    "table_min_bgr_threshold": [100, 145, 190],
+    "table_max_bgr_threshold": [140, 170, 220],
     "min_table_width": 0.3,
     "frame_queue_size": 30,
     "video_output_dir": "~/Documents/PIPSRecordings/",

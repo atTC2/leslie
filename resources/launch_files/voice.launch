@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+
+  <node name="recognizer" pkg="pocketsphinx" type="recognizer.py" output="screen">
+    <param name="lm" value="$(find leslie)/resources/voice_control/voice.lm"/>
+    <param name="dict" value="$(find leslie)/resources/voice_control/voice.dic"/>
+  </node>
+
+</launch>

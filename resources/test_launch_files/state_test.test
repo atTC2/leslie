@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+  <!-- Run nodes -->
+  <node name="state_machine" pkg="leslie" type="state_machine.py" output="screen" />
+  
+  <!-- Run tests -->
+  <test test-name="state_test" pkg="leslie" type="state_test.py" />
+</launch>
