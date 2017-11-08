@@ -22,11 +22,10 @@ def get_data_from_camera(camera_index, camera_checker):
         data = camera_checker(frame)
 
         # Make frame
-        cv2.imshow('frame', frame)
+        cv2.imshow('Face View', frame)
 
         # Publish frame
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        cv2.waitKey(1)
 
     # Once done, destroy all windows
     # We can move this destroy and the VideoCapture at the beginning

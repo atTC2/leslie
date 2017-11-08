@@ -85,11 +85,11 @@ def reset(cap):
     :type cap: VideoCapture
     """
     global previous_frames
+    global state_id
 
     # Release capture and destroy windows
     cap.release()
-    # TESTING
-    # cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
 
     change_util.crop_left = None
     change_util.crop_right = None
@@ -117,8 +117,9 @@ def reset(cap):
             email_report.send_report_email(state_data['notify_owner'], change_util.video_file)
 
         change_util.video_file = None
-        
-    pub.publish(json.dumps({'id': actions.ALARM_HANDLED, 'data': {}}))
+
+    if state_id == states.ALARM_REPORT:
+        pub.publish(json.dumps({'id': actions.ALARM_HANDLED, 'data': {}}))
 
 
 def run():
@@ -127,6 +128,7 @@ def run():
     """
     global running
     global pub
+    global state_id
     global state_data
 
     cap = cv2.VideoCapture(config_access.get_config(config_access.KEY_CAMERA_INDEX_TABLE))
@@ -143,10 +145,8 @@ def run():
             # publish alarm
             pub.publish(json.dumps({'id': actions.MOVEMENT_DETECTED, 'data': state_data}))
 
-        # TESTING (will actually simulate getting 'turn off' state)
-        # cv2.imshow('frame', frame)
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     pub.publish(json.dumps({'id': actions.FACE_RECOGNISED, 'data': state_data}))
+        cv2.imshow('Table View', frame)
+        cv2.waitKey(1)
 
     # No longer running, reset
     reset(cap)
