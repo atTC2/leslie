@@ -7,6 +7,9 @@
   
   <arg name="rviz_config_file" default="laser_and_particles.rviz"/>
   <arg name="map_file" default="$(find leslie)/resources/maps/newlowerground.yaml"/>
+  
+  <arg name="sleep_multiplier" default="1"/>
+  <arg name="sleep" value="$(find leslie)/resources/launch_prefixes/sleepy.sh $(arg sleep_multiplier)" />
 
   <!-- Run the map server -->
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
@@ -15,20 +18,31 @@
   <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100"/>
 
   <!-- Run rviz -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find leslie)/resources/rviz_configs/$(arg rviz_config_file)" />
+  <node name="rviz" pkg="rviz" type="rviz"
+        args="-d $(find leslie)/resources/rviz_configs/$(arg rviz_config_file)"
+        launch-prefix="$(arg sleep) 10" />
 
   <!-- Run nodes -->
   <node name="state_machine" pkg="leslie" type="state_machine.py" output="screen" />
-  <include file="$(find leslie)/resources/launch_files/move_base.launch" />
+  <include file="$(find leslie)/resources/launch_files/move_base.launch">
+      <arg name="sleep_multiplier" value="$(arg sleep_multiplier)" />
+  </include>
   <node name="navstack_supervisor" pkg="leslie" type="navstack_supervisor.py" output="screen" />
-  <node name="facial_node" pkg="leslie" type="facial_node.py" output="screen" />
-  <include file="$(find leslie)/resources/launch_files/voice.launch" />
-  <node name="voice_control" pkg="leslie" type="voice_control.py" output="screen" />
-  <node name="change_node" pkg="leslie" type="change_node.py" output="screen" />
-  <node name="notifications_manager" pkg="leslie" type="notifications_manager.py" output="screen" />
+  <node name="facial_node" pkg="leslie" type="facial_node.py" output="screen"
+        launch-prefix="$(arg sleep) 20" />
+  <include file="$(find leslie)/resources/launch_files/voice.launch">
+      <arg name="sleep_multiplier" value="$(arg sleep_multiplier)" />
+  </include>
+  <node name="voice_control" pkg="leslie" type="voice_control.py" output="screen"
+        launch-prefix="$(arg sleep) 6" />
+  <node name="change_node" pkg="leslie" type="change_node.py" output="screen"
+        launch-prefix="$(arg sleep) 20" />
+  <node name="notifications_manager" pkg="leslie" type="notifications_manager.py" output="screen"
+        launch-prefix="$(arg sleep) 20" />
   
   <!-- Run RQT Graph -->
   <!--
-  <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph" output="screen" />
+  <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph" output="screen"
+        launch-prefix="$(arg sleep) 5" />
   -->
 </launch>
