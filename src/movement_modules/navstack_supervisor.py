@@ -40,11 +40,11 @@ for i in range(5):
     table.append(p)
 
 # positions are taken from rviz
-table[0].position = Point(-1.75060284138, -4.99175453186, 0)
-table[1].position = Point(-0.678676903248, -2.35280752182, 0)
-table[2].position = Point(0.39291536808, 0.249539896846, 0)
-table[3].position = Point(1.50023245811, 2.81623911858, 0)
-table[4].position = Point(2.67847919464, 5.56012153625, 0)
+table[0].position = Point(-1.55060284138, -4.99175453186, 0)
+table[1].position = Point(-0.478676903248, -2.35280752182, 0)
+table[2].position = Point(0.19291536808, 0.249539896846, 0)
+table[3].position = Point(1.30023245811, 2.81623911858, 0)
+table[4].position = Point(2.47847919464, 5.56012153625, 0)
 
 #  --- --- --- --- --- ---
 
@@ -81,7 +81,6 @@ def state_callback(state_msg):
     client.wait_for_server()  # blocks indefinitely
     #  sets goal, send to navstack server and waits for navstack to run
     goal.target_pose.header.frame_id = "/map"
-    goal.target_pose.pose = table[state_json['data']['tableID']]
     print str(goal.target_pose.pose)
     client.send_goal_and_wait(goal)
     print 'done waiting'
