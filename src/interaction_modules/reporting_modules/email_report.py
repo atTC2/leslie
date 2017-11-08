@@ -1,27 +1,55 @@
+import rospy
+import json
 from datetime import datetime
+from std_msgs.msg import String
 from interaction_modules.email_util import create_email, send_email, attach_body, attach_file
+from state_machine import actions
 from util_modules.people_info import get_user_info
 from os.path import getctime
 from sys import stderr
+from functools import partial
+from incident_report import IncidentReport
+
+reporter = IncidentReport()
+pub = rospy.Publisher('/action', String, queue_size=10)
 
 
 def send_report_email(name, file_path):
     """
-    Sends a report email for an incident, including the video recording
+    Ask the user if they wish to have an email report sent to them (if they have an address configured) and sends if
+    confirmed
     :param name: The name of whom the report is being sent to
     :param file_path: The path to the video file
-    :type name: String
-    :type file_path: String
+    :type name: str
+    :type file_path: str
     """
     # Check if they have an email address
     user_info = get_user_info(name)
     if 'email_address' not in user_info:
         # No email address
+        handled_alarm()
         return
 
-    recipient_address = user_info['email_address']
+    # Give the incident reporter a new callback
+    callback = partial(real_send_email, name, user_info['email_address'], file_path)
+    reporter.prompt_email_confirmation(callback)
 
-    # TODO ask the user if they want the email report
+
+def real_send_email(name, recipient_address, file_path, would_like_email):
+    """
+    Actually send a report email including a video recording (if user confirmed) and forward state
+    :param name: The name of whom the report is being sent to
+    :param recipient_address: The email address of the user
+    :param file_path: The path to the video file
+    :param would_like_email: Whether to send an email
+    :type name: str
+    :type recipient_address: str
+    :type file_path: str
+    :type would_like_email: bool
+    """
+    if not would_like_email:
+        handled_alarm()
+        return
 
     # Get the incident time
     try:
@@ -46,3 +74,11 @@ def send_report_email(name, file_path):
 
     # Send the email
     send_email(recipient_address, msg)
+    handled_alarm()
+
+
+def handled_alarm():
+    """
+    Forward state
+    """
+    pub.publish(json.dumps({'id': actions.ALARM_HANDLED, 'data': {}}))

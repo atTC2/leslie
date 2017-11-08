@@ -1,14 +1,8 @@
-import pyttsx   # sudo pip install pyttsx
-
-engine = pyttsx.init()
+from util_modules import speech_engine
 
 
 def notify():
     """
-    Say the message out loud and print it
+    Say alarm!
     """
-    beep_full_message = 'ALARM!'
-    engine.say('beep beep bloop blob')
-    engine.say(beep_full_message)
-    engine.runAndWait()
-    print (beep_full_message)
+    speech_engine.say('beep beep bloop blob ALARM!')

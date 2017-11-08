@@ -1,21 +1,13 @@
-import pyttsx
 import rospy
-import json
 from std_msgs.msg import String
-from state_machine import actions
-
-engine = pyttsx.init()  # speech engine
+from util_modules import speech_engine
 
 
 class IncidentReport:
-    # define the constructor of the class
 
     def __init__(self):
-
-        speak("would you like an incident report via email")
-
         # initialize the ROS node with a name incident_report
-        rospy.init_node('incident_report')
+        # rospy.init_node('incident_report')
 
         # Subscribe to the /recognizer/output topic to receive voice commands.
         rospy.Subscriber('/recognizer/output', String, self.voice_report)
@@ -23,47 +15,42 @@ class IncidentReport:
         # A mapping from keywords or phrases to commands
         self.commands = ['yes', 'no']
 
-        rospy.loginfo("Ready to receive voice commands")
+        rospy.loginfo("incident_report - ready to receive voice commands")
 
         self.pub = rospy.Publisher('/action', String, queue_size=1)
 
-        self.incident_end = True
+        self.callback = None
+
+    def prompt_email_confirmation(self, callback):
+        """
+        Set the call back to email sender and ask user for input
+        :param callback: The callback function to call
+        :type callback: (bool) -> None
+        """
+        speech_engine.say("would you like an incident report via email")
+        self.callback = callback
 
     def voice_report(self, msg):
-
-        if not self.incident_end:
+        """
+        Check received speech for confirmation to email report
+        :param msg: User speech
+        :type msg: String
+        """
+        if self.callback is None:
             # Don't run now
             return
 
         command = msg.data
 
-        report = -1
         if command in self.commands:
             if command.find('yes') != -1:
-                speak("sending report")
-                report = 0
+                speech_engine.say("sending report")
+                self.callback(True)
             elif command.find('no') != -1:
-                speak("okay i will not send a report")
-                report = 1
+                speech_engine.say("okay i will not send a report")
+                self.callback(False)
 
-            self.incident_end = False
-            action = {}
-            action['id'] = actions.CALLED_OVER
-            action['data'] = {'reportID': report}
-            self.pub.publish(json.dumps(action))
+            self.callback = None
         else:  # command not found
             print ("command not recognised")
 
-
-def speak(arg):
-    engine.say(arg)
-    engine.say("   ")
-    engine.runAndWait()
-
-
-if __name__ == "__main__":
-    try:
-        IncidentReport()
-        rospy.spin()
-    except rospy.ROSInterruptException:
-        rospy.loginfo("Voice terminated.")

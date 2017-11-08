@@ -165,9 +165,6 @@ def reset(cap):
 
         change_util.video_file = None
 
-    if state_id == states.ALARM_REPORT:
-        pub.publish(json.dumps({'id': actions.ALARM_HANDLED, 'data': {}}))
-
 
 def run():
     """
