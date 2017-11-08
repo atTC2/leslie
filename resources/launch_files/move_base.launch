@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
-  <!-- we need amcl running -->
-  <include file="$(find leslie)/resources/launch_files/amcl.launch"/>
   
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen"> 
+  <arg name="sleep_multiplier" default="1"/>
+  <arg name="sleep" value="$(find leslie)/resources/launch_prefixes/sleepy.sh $(arg sleep_multiplier)" />
+  
+  <!-- we need amcl running -->
+  <include file="$(find leslie)/resources/launch_files/amcl.launch">
+      <arg name="sleep_multiplier" value="$(arg sleep_multiplier)" />
+  </include>
+  
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen"
+        launch-prefix="$(arg sleep) 6">
     <rosparam file="$(find leslie)/resources/navstack_params/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find leslie)/resources/navstack_params/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find leslie)/resources/navstack_params/local_costmap_params.yaml" command="load" />
