@@ -22,8 +22,13 @@ if __name__ != '__main__':
     exit(1)
 
 # Frame information
-FRAME_QUEUE_SIZE = config_access.get_config(config_access.KEY_FRAME_QUEUE_SIZE)
+FRAME_QUEUE_SIZE = config_access.get_config(config_access.KEY_CHANGE_FRAME_QUEUE_SIZE)
 previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
+change_history = Queue(maxsize=FRAME_QUEUE_SIZE)
+
+# Change detection parameters
+MIN_CONTOUR_AREA = config_access.get_config(config_access.KEY_CHANGE_MIN_CONTOUR_AREA)
+CHANGE_SIGNIFICANT_CHANGE_THRESHOLD = config_access.get_config(config_access.KEY_CHANGE_SIGNIFICANT_CHANGE_THRESHOLD)
 
 # State information
 running = False
@@ -43,6 +48,7 @@ def detect_change(original_image):
     global previous_frames
     global state_data
     global pub
+    global MIN_CONTOUR_AREA
 
     image = crop_to_table(original_image)
 
@@ -59,7 +65,14 @@ def detect_change(original_image):
     contours = calculate_contours(grey, previous_frames.get())
 
     # Has there been a change?
-    changed = len(contours) != 0
+    changed = False
+    for contour in contours:
+        # If the contour is too small, ignore it
+        if cv2.contourArea(contour) < MIN_CONTOUR_AREA:
+            continue
+        else:
+            changed = True
+            break
 
     # Draw the changes
     draw_changes(image, contours)
@@ -78,6 +91,38 @@ def detect_change(original_image):
     return changed
 
 
+def detect_significant_change(original_image):
+    """
+    Using detect_change(), decides if there has been a significant change in recent history
+    :param original_image: The image to compare to the previous (the method will return False if it is the first call)
+    :type original_image: numpy.ndarray
+    :return: True if there has been consistent changes recently, False if not (i.e. no need to alarm)
+    :rtype: bool
+    """
+    global change_history
+    global CHANGE_SIGNIFICANT_CHANGE_THRESHOLD
+
+    # Find out if there is 'change' in the current frame
+    changed = detect_change(original_image)
+    # Save if there was a change on this frame
+    change_history.put(changed)
+    # We need to have at least the queue full before we do the rest of this
+    if not change_history.full():
+        return False
+    # Remove the oldest change history
+    change_history.get()
+    # Decide if we need to return a significant change
+    change_history_detected_count = 0
+    for _ in range(FRAME_QUEUE_SIZE):
+        change_history_change = change_history.get()
+        if change_history_change:
+            change_history_detected_count += 1
+        change_history.put(change_history_change)
+
+    # If over half of the recent change detection is 'change detected', then we should return a significant change
+    return change_history_detected_count > (FRAME_QUEUE_SIZE * CHANGE_SIGNIFICANT_CHANGE_THRESHOLD)
+
+
 def reset(cap):
     """
     Resets all configured values to null and handles video file compress and reporting if an alarm was triggered
@@ -86,6 +131,7 @@ def reset(cap):
     """
     global previous_frames
     global state_id
+    global change_history
 
     # Release capture and destroy windows
     cap.release()
@@ -94,6 +140,7 @@ def reset(cap):
     change_util.crop_left = None
     change_util.crop_right = None
     previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
+    change_history = Queue(maxsize=FRAME_QUEUE_SIZE)
 
     if change_util.video_writer is not None:
         change_util.video_writer.release()
@@ -139,7 +186,7 @@ def run():
         ret, frame = cap.read()
 
         # Apply the method
-        changed = detect_change(frame)
+        changed = detect_significant_change(frame)
 
         if changed and state_id == states.LOCKED_AND_WAITING:
             # publish alarm

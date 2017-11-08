@@ -4,7 +4,7 @@ from datetime import datetime
 from util_modules import config_access
 
 # Minimum percentage of the image that should be retained when cropping
-MIN_TABLE_WIDTH = config_access.get_config(config_access.KEY_MIN_TABLE_WIDTH)
+MIN_TABLE_WIDTH = config_access.get_config(config_access.KEY_CHANGE_MIN_TABLE_WIDTH)
 crop_left = None
 crop_right = None
 

@@ -21,14 +21,18 @@ if __name__ != '__main__':
 saved_encodings = facial_utils.get_known_faces()
 CAMERA_INDEX = config_access.get_config(config_access.KEY_CAMERA_INDEX_FACE)
 FRAME_THRESHOLD = config_access.get_config(config_access.KEY_FACE_FRAME_THRESHOLD)
+SLEEP_TIME = config_access.get_config(config_access.KEY_MIN_LOCKED_TIME_SECONDS)
 
 frame_count = 0
 
 
 def identify(image):
     """
-    Identify faces in a given frame by associating them with
-    filenames in the /known_faces/ directory.
+    Identify faces in a given frame by associating them with file names in the /known_faces/ directory.
+    :param image: The image to perform facial recognition on
+    :type image: numpy.ndarray
+    :return: The name of the person identified, or None if no one is detected
+    :rtype: String or None
     """
     global saved_encodings
     face_locations = face_recognition.face_locations(image)
@@ -65,10 +69,13 @@ def identify(image):
 
 def detect(image):
     """
-    Only attempt to recognize a face in a frame every time
-    the frame_count reaches the FRAME_THRESHOLD. When the threshold
-    is reached, the identification process is carried out on the
-    selected frame. Consequently, the frame_count is reset.
+    Only attempt to recognize a face in a frame every time the frame_count reaches the FRAME_THRESHOLD. When the
+    threshold is reached, the identification process is carried out on the selected frame. Consequently, the
+    frame_count is reset.
+    :param image: The image to perform facial recognition on
+    :type image: numpy.ndarray
+    :return: The name of the person identified, or None if no one is detected
+    :rtype: String or None
     """
     global frame_count, FRAME_THRESHOLD
     data = None
@@ -83,6 +90,13 @@ def detect(image):
 
 
 def state_callback(state_msg):
+    """
+    Handles new state information, and watches for faces if the state is right
+    :param state_msg: The new state information
+    :type state_msg: std_msgs.msg.String
+    """
+    global SLEEP_TIME
+
     print "state_msg: ", state_msg
     state = json.loads(state_msg.data)
     action = {}
@@ -96,7 +110,7 @@ def state_callback(state_msg):
         
     elif state['id'] == states.LOCKED_AND_WAITING:
         owner = state['data']['current_owner']
-        rospy.sleep(30)
+        rospy.sleep(SLEEP_TIME)
         result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
         while owner not in result:
             result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
