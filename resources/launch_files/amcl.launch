@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<launch>  
-  <node name="amcl" pkg="amcl" type="amcl">    
+<launch>
+  
+  <arg name="sleep_multiplier" default="1"/>
+  <arg name="sleep" value="$(find leslie)/resources/launch_prefixes/sleepy.sh $(arg sleep_multiplier)" />
+  
+  <node name="amcl" pkg="amcl" type="amcl"
+        launch-prefix="$(arg sleep) 3">
     <param name="initial_pose_x"            value="-1.38991832733"/>
     <param name="initial_pose_y"            value="-9.28993225098"/>
     <param name="initial_pose_a"            value="21.70767009"/>

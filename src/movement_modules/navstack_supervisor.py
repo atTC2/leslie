@@ -41,7 +41,7 @@ for i in range(5):
 
 # positions are taken from rviz
 table[0].position = Point(-1.8060284138, -4.99175453186, 0)
-table[1].position = Point(-0.728676903248, -2.35280752182, 0)
+table[1].position = Point(-1.2, -2.0, 0)
 table[2].position = Point(-0.04291536808, 0.249539896846, 0)
 table[3].position = Point(1.05023245811, 2.81623911858, 0)
 table[4].position = Point(2.22847919464, 5.56012153625, 0)
