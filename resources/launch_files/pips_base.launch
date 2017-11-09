@@ -14,9 +14,6 @@
   <!-- Run the map server -->
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
 
-  <!-- Publish a static transformation between /map and /odom -->
-  <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100"/>
-
   <!-- Run rviz -->
   <node name="rviz" pkg="rviz" type="rviz"
         args="-d $(find leslie)/resources/rviz_configs/$(arg rviz_config_file)"

@@ -6,9 +6,9 @@
   
   <node name="amcl" pkg="amcl" type="amcl"
         launch-prefix="$(arg sleep) 3">
-    <param name="initial_pose_x"            value="0.0"/>
-    <param name="initial_pose_y"            value="0.0"/>
-    <param name="initial_pose_a"            value="0"/>
+    <param name="initial_pose_x"            value="-1.38991832733"/>
+    <param name="initial_pose_y"            value="-9.28993225098"/>
+    <param name="initial_pose_a"            value="21.70767009"/>
     
     <param name="min_particles"             value="50"/>
     <param name="max_particles"             value="400"/>

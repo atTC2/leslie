@@ -39,13 +39,19 @@ for i in range(5):
     p.orientation = table_orientation
     table.append(p)
 
-table[0].position = Point(-2.03, -4.8, 0)
-table[1].position = Point(-1.09, -1.957, 0)
-table[2].position = Point(0.193, 0.385, 0)
-table[3].position = Point(1.221, 3.015, 0)
-table[4].position = Point(2.282, 5.741, 0)
+# positions are taken from rviz
+table[0].position = Point(-1.8060284138, -4.99175453186, 0)
+table[1].position = Point(-1.2, -2.0, 0)
+table[2].position = Point(-0.04291536808, 0.249539896846, 0)
+table[3].position = Point(1.05023245811, 2.81623911858, 0)
+table[4].position = Point(2.22847919464, 5.56012153625, 0)
 
 #  --- --- --- --- --- ---
+
+
+home_pose = Pose()
+home_pose.position = Point(-1.38991832733, -9.28993225098, 0)
+home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
 
 #  create action client, interface with navstack via client-server model
 client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
@@ -53,25 +59,28 @@ client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
 def state_callback(state_msg):
     """
-    Runs if the current state is to MOVE_TO_TABLE.
-    Launches the move_base launch file, which includes the navstack and amcl.
-    sends the navstack a goal
-    which was included in the message published with the /state topic,
+    Runs if the current state is to MOVE_TO_TABLE or MOVE_TO_HOME.
+    Sends the navstack a goal, which is either a table or home where
+    table was included in the message published to the /state topic,
     then waits for robot to reach that goal.
 
-    :param state_msg: The current state of the robot's State Machine and data about table
+    :param state_msg: The current state of the robot's State Machine and data about table if applicable
     :type state_msg: std_msgs.msg.String
     """
-    global client
+    global home_pose, client
     state_json = json.loads(state_msg.data)
-    if state_json['id'] != states.MOVE_TO_TABLE:
+    goal = MoveBaseGoal()
+    # determine goal based on state
+    if state_json['id'] == states.MOVE_TO_TABLE:
+        goal.target_pose.pose = table[state_json['data']['tableID']]
+    elif state_json['id'] == states.MOVE_TO_HOME:
+        goal.target_pose.pose = home_pose
+    else:
         return
 
     client.wait_for_server()  # blocks indefinitely
-    #  creates goal, send to navstack server and waits for navstack to run
-    goal = MoveBaseGoal()
+    #  sets goal, send to navstack server and waits for navstack to run
     goal.target_pose.header.frame_id = "/map"
-    goal.target_pose.pose = table[state_json['data']['tableID']]
     print str(goal.target_pose.pose)
     client.send_goal_and_wait(goal)
     print 'done waiting'

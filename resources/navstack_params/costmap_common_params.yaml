@@ -22,6 +22,6 @@ obstacle_layer:
     laser_scan_sensor: {data_type: LaserScan, topic: /base_scan, marking: true, clearing: true, inf_is_valid: true}
 
 inflation:
-    inflation_radius: 0.03
+    inflation_radius: 0.08
     cost_scaling_factor: 10.0
     lethal_cost_threshold: 10.0
