@@ -5,7 +5,7 @@ from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 from sys import stderr
 from email.mime.multipart import MIMEMultipart
-from util_modules import config_access
+from util_modules import config_access, speech_engine
 from os.path import basename
 
 requests.packages.urllib3.disable_warnings()
@@ -14,6 +14,13 @@ EMAIL_ADDRESS = config_access.get_config(config_access.KEY_EMAIL_ADDRESS)
 EMAIL_PASSWORD = config_access.get_config(config_access.KEY_EMAIL_PASSWORD)
 EMAIL_SERVER = config_access.get_config(config_access.KEY_EMAIL_SERVER)
 EMAIL_PORT = config_access.get_config(config_access.KEY_EMAIL_PORT)
+
+
+def email_failed():
+    """
+    Creates an audio message indicating that the email failed to send
+    """
+    speech_engine.say("I'm sorry, I failed to send the message")
 
 
 def create_email(recipient_address, subject):
@@ -63,6 +70,7 @@ def attach_file(msg, file_path):
             )
     except IOError:
         print >> stderr, 'Could not read file (please check permissions):\n', file_path
+        email_failed()
         return False
 
     # After the file is closed
@@ -89,9 +97,13 @@ def send_email(recipient_address, msg):
         server.quit()
     except socket.gaierror:
         print >> stderr, 'Failed to send email (please check internet connection and SMTP configuration)'
+        email_failed()
     except smtplib.SMTPAuthenticationError:
         print >> stderr, 'Could not authenticate with SMTP server (please check credentials)'
+        email_failed()
     except smtplib.SMTPSenderRefused, e:
         print >> stderr, 'Failed to send email (refused)\n', e.smtp_error
+        email_failed()
     except socket.error, e:
         print >> stderr, 'Connection timeout (check SMTP configuration)', e.message
+        email_failed()

@@ -1,20 +1,23 @@
-import rospy
 import json
 from datetime import datetime
-from std_msgs.msg import String
-from interaction_modules.email_util import create_email, send_email, attach_body, attach_file
-from state_machine import actions
-from util_modules.people_info import get_user_info
+from functools import partial
 from os.path import getctime
 from sys import stderr
-from functools import partial
-from incident_report import IncidentReport
 
-reporter = IncidentReport()
+import rospy
+from std_msgs.msg import String
+
+from interaction_modules.email_util import create_email, send_email, attach_body, attach_file
+from interaction_modules.yes_no_listener import YesNoListener
+from state_machine import actions
+from util_modules import speech_engine
+from util_modules.people_info import get_user_info
+
+yes_no_listener = YesNoListener()
 pub = rospy.Publisher('/action', String, queue_size=10)
 
 
-def send_report_email(name, file_path):
+def ask_send_report_email(name, file_path):
     """
     Ask the user if they wish to have an email report sent to them (if they have an address configured) and sends if
     confirmed
@@ -31,8 +34,8 @@ def send_report_email(name, file_path):
         return
 
     # Give the incident reporter a new callback
-    callback = partial(real_send_email, name, user_info['email_address'], file_path)
-    reporter.prompt_email_confirmation(callback)
+    speech_engine.say("would you like an incident report via email")
+    yes_no_listener.callback = partial(real_send_email, name, user_info['email_address'], file_path)
 
 
 def real_send_email(name, recipient_address, file_path, would_like_email):
@@ -48,8 +51,11 @@ def real_send_email(name, recipient_address, file_path, would_like_email):
     :type would_like_email: bool
     """
     if not would_like_email:
+        speech_engine.say("okay, i will not send you the report")
         handled_alarm()
         return
+
+    speech_engine.say("sending report")
 
     # Get the incident time
     try:

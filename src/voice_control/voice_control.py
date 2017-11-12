@@ -28,14 +28,14 @@ class VoiceControl:
         # initialize the ROS node with a name voice_teleop
         rospy.init_node('voice_control')
 
-        rospy.Subscriber('/state', String, self.state_call_back, queue_size=1)
+        rospy.Subscriber('/state', String, self.state_call_back, queue_size=10)
 
         # Subscribe to the /recognizer/output topic to receive voice commands.
         rospy.Subscriber('/recognizer/output', String, self.voice_command_callback)
 
         rospy.loginfo("voice_control - ready to receive voice commands")
 
-        self.pub = rospy.Publisher('/action', String, queue_size=1)
+        self.pub = rospy.Publisher('/action', String, queue_size=10)
 
         self.at_home = True
 
@@ -115,9 +115,12 @@ def check_table(self, msg):
     if yesno == 'yes':
         self.at_home = False
         speech_engine.say("Going to table " + str(print_table))
-        action = {}
-        action['id'] = actions.CALLED_OVER
-        action['data'] = {'tableID': selected_table}
+        action = {
+            'id': actions.CALLED_OVER,
+            'data': {
+                'tableID': selected_table
+            }
+        }
         self.pub.publish(json.dumps(action))
     # If table not correct ask again which table leslie should go to
     elif yesno == 'no':

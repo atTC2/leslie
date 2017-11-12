@@ -9,7 +9,9 @@ from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
 from nav_msgs.srv import GetMap
 from std_msgs.msg import String
 
+from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import states, actions
+from util_modules import speech_engine
 
 if __name__ != '__main__':
     from sys import stderr
@@ -56,6 +58,8 @@ home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
 #  create action client, interface with navstack via client-server model
 client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
+yes_no_listener = YesNoListener()
+
 
 def state_callback(state_msg):
     """
@@ -87,12 +91,30 @@ def state_callback(state_msg):
 
     #  after navstack completes, get its 'state' and check if reached goal
     if client.get_state() == actionlib.GoalStatus.SUCCEEDED:
-        print 'successfully reached goal'
-        action_data = {'id': actions.ARRIVED, 'data': ''}
-        state_pub.publish(String(json.dumps(action_data)))
+        if state_json['id'] == states.MOVE_TO_TABLE:
+            # Ensure the correct table has been reached
+            speech_engine.say("is this the table you meant?")
+            yes_no_listener.callback = table_confirmed
+        elif state_json['id'] == states.MOVE_TO_HOME:
+            print 'successfully reached home'
+            action_data = {'id': actions.ARRIVED, 'data': {}}
+            state_pub.publish(String(json.dumps(action_data)))
     else:
         print 'fail to reach goal'
         # TODO: Return home
+
+
+def table_confirmed(right_table):
+    """
+    Handle whether the user says the robot has arrived at the correct or incorrect table
+    :param right_table: Whether the user said the current location is correct
+    :type right_table: bool
+    """
+    action_data = {
+        'id': actions.ARRIVED if right_table else actions.WRONG_TABLE,
+        'data': {}
+    }
+    state_pub.publish(String(json.dumps(action_data)))
 
 
 def goal_callback(goal):

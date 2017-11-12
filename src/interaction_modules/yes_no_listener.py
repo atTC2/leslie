@@ -1,14 +1,10 @@
 import rospy
 from std_msgs.msg import String
-from util_modules import speech_engine
 
 
-class IncidentReport:
+class YesNoListener:
 
     def __init__(self):
-        # initialize the ROS node with a name incident_report
-        # rospy.init_node('incident_report')
-
         # Subscribe to the /recognizer/output topic to receive voice commands.
         rospy.Subscriber('/recognizer/output', String, self.voice_report)
 
@@ -20,15 +16,6 @@ class IncidentReport:
         self.pub = rospy.Publisher('/action', String, queue_size=1)
 
         self.callback = None
-
-    def prompt_email_confirmation(self, callback):
-        """
-        Set the call back to email sender and ask user for input
-        :param callback: The callback function to call
-        :type callback: (bool) -> None
-        """
-        speech_engine.say("would you like an incident report via email")
-        self.callback = callback
 
     def voice_report(self, msg):
         """
@@ -44,13 +31,13 @@ class IncidentReport:
 
         if command in self.commands:
             if command.find('yes') != -1:
-                speech_engine.say("sending report")
-                self.callback(True)
+                tmp_callback = self.callback
+                self.callback = None
+                tmp_callback(True)
             elif command.find('no') != -1:
-                speech_engine.say("okay i will not send a report")
-                self.callback(False)
-
-            self.callback = None
+                tmp_callback = self.callback
+                self.callback = None
+                tmp_callback(False)
         else:  # command not found
-            print ("command not recognised")
+            print 'command not recognised'
 

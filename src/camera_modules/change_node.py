@@ -158,10 +158,10 @@ def reset(cap):
             os.remove(change_util.video_file)
 
             # We know the video is compressed, and not being written to, so we can send it here
-            email_report.send_report_email(state_data['notify_owner'], change_util.video_file.replace('.avi', '.mp4'))
+            email_report.ask_send_report_email(state_data['notify_owner'], change_util.video_file.replace('.avi', '.mp4'))
         else:
             # Compression failed, try with the other video anyway
-            email_report.send_report_email(state_data['notify_owner'], change_util.video_file)
+            email_report.ask_send_report_email(state_data['notify_owner'], change_util.video_file)
 
         change_util.video_file = None
 
