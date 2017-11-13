@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import pyttsx
 import rospy
 import json
 from std_msgs.msg import String
 from state_machine import actions, states
+from util_modules import speech_engine
 
 
 if __name__ != '__main__':
@@ -14,7 +14,6 @@ if __name__ != '__main__':
     exit(1)
 
 
-engine = pyttsx.init()  # speech engine
 state = 1  # State of voice control
 selected_table = -1  # table selected by user [0-4]
 print_table = -1  # table selected by user plus 1 for speech [1-5]
@@ -24,7 +23,7 @@ class VoiceControl:
     # define the constructor of the class
     def __init__(self):
 
-        speak("which table would you like to go to")
+        speech_engine.say("which table would you like to go to")
 
         # initialize the ROS node with a name voice_teleop
         rospy.init_node('voice_control')
@@ -34,7 +33,7 @@ class VoiceControl:
         # Subscribe to the /recognizer/output topic to receive voice commands.
         rospy.Subscriber('/recognizer/output', String, self.voice_command_callback)
 
-        rospy.loginfo("Ready to receive voice commands")
+        rospy.loginfo("voice_control - ready to receive voice commands")
 
         self.pub = rospy.Publisher('/action', String, queue_size=1)
 
@@ -42,7 +41,6 @@ class VoiceControl:
 
     # choose correct question and voice response for current state
     def voice_command_callback(self, msg):
-
         global state
         global selected_table
 
@@ -51,37 +49,28 @@ class VoiceControl:
             return
 
         if state == 1:
-
-            print("State 1")
+            print 'Processing table instruction...'
             selected_table = get_table(msg)
 
         elif state == 2:
-            print ("State 2")
+            print 'Processing instruction confirmation for table', selected_table
             check_table(self, msg)
 
     def state_call_back(self, data):
-
         global state
 
         state_json = json.loads(data.data)
         state_id = state_json['id']
         if state_id == states.WAIT_FOR_INSTRUCTION:
+            speech_engine.say("which table would you like to go to")
             state = 1
             self.at_home = True
         else:
             self.at_home = False
 
 
-# Leslie speaks sentence - args
-def speak(arg):
-    engine.say(arg)
-    engine.say("   ")
-    engine.runAndWait()
-
-
 # Allow user to select table
 def get_table(msg):
-
     global state
     global print_table
 
@@ -107,7 +96,7 @@ def get_table(msg):
         print("change state")
         state = 2
         print_table = table + 1
-        speak("would you like to go to table " + str(print_table))
+        speech_engine.say("would you like to go to table " + str(print_table))
     # Re-ask the question if command not recognised
 
     return table
@@ -125,14 +114,14 @@ def check_table(self, msg):
     # If table correct publish table number to state machine
     if yesno == 'yes':
         self.at_home = False
-        speak("Going to table " + str(print_table))
+        speech_engine.say("Going to table " + str(print_table))
         action = {}
         action['id'] = actions.CALLED_OVER
         action['data'] = {'tableID': selected_table}
         self.pub.publish(json.dumps(action))
     # If table not correct ask again which table leslie should go to
     elif yesno == 'no':
-        speak("which table would you like to go to")
+        speech_engine.say("which table would you like to go to")
         state = 1
     # If user says yes nor no then re-ask the question
     else:
