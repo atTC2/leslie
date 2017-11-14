@@ -125,7 +125,7 @@ def go_to_goal(goal, state_json, attempt):
         # What we'll do is wait, and try again (it's usually stuck, not delocalised)
         print 'Failed to reach goal, catching my breath and trying again, attempt', attempt
         rospy.sleep(10)
-        go_to_goal(goal, attempt + 1)
+        go_to_goal(goal, state_json, attempt + 1)
 
 
 def table_confirmed(right_table):
