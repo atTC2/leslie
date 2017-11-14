@@ -8,6 +8,8 @@ from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
 from nav_msgs.srv import GetMap
 from std_msgs.msg import String
+# FOR TESTING: If we're trying relocalisation if we cannot reach the goal
+# from std_srvs.srv import Empty
 
 from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import states, actions
@@ -50,7 +52,6 @@ table[4].position = Point(2.22847919464, 5.56012153625, 0)
 
 #  --- --- --- --- --- ---
 
-
 home_pose = Pose()
 home_pose.position = Point(-1.38991832733, -9.28993225098, 0)
 home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
@@ -82,12 +83,24 @@ def state_callback(state_msg):
     else:
         return
 
+    go_to_goal(goal, state_json, 1)
+
+
+def go_to_goal(goal, state_json, attempt):
+    """
+    Forces the robot to go to the goal. If it fails, it'll wait (for obstacles to move...) and try again until it gets
+    there
+    :param goal: The goal of the navstack pathfinding
+    :param state_json: The state JSON (containing current state information)
+    :param attempt: The attempt number
+    :type goal: PoseStamped
+    :type state_json: object
+    :type attempt: int
+    """
     client.wait_for_server()  # blocks indefinitely
     #  sets goal, send to navstack server and waits for navstack to run
     goal.target_pose.header.frame_id = "/map"
-    print str(goal.target_pose.pose)
     client.send_goal_and_wait(goal)
-    print 'done waiting'
 
     #  after navstack completes, get its 'state' and check if reached goal
     if client.get_state() == actionlib.GoalStatus.SUCCEEDED:
@@ -97,11 +110,22 @@ def state_callback(state_msg):
             yes_no_listener.callback = table_confirmed
         elif state_json['id'] == states.MOVE_TO_HOME:
             print 'successfully reached home'
-            action_data = {'id': actions.ARRIVED, 'data': {}}
+            action_data = {
+                'id': actions.ARRIVED,
+                'data': {}
+            }
             state_pub.publish(String(json.dumps(action_data)))
     else:
-        print 'fail to reach goal'
-        # TODO: Return home
+        # Failed to reach goal'
+        # leaving relocalisation test code in, as may be useful if we test to compare the two methods
+        # rospy.wait_for_service('global_localization')
+        # global_localization = rospy.ServiceProxy('global_localization', std_srvs.srvEmpty)
+        # resp = global_localization()
+        # print 'Failed to reach goal, re-localising and trying again, attempt', attempt
+        # What we'll do is wait, and try again (it's usually stuck, not delocalised)
+        print 'Failed to reach goal, catching my breath and trying again, attempt', attempt
+        rospy.sleep(10)
+        go_to_goal(goal, attempt + 1)
 
 
 def table_confirmed(right_table):
@@ -119,9 +143,7 @@ def table_confirmed(right_table):
 
 def goal_callback(goal):
     """
-    Prints any received goal to the screen.
-    Can be quite useful for debugging.
-
+    Prints any received goal to the screen (usefulfor debug)
     :param goal: The goal of the navstack pathfinding
     :type goal: PoseStamped
     """
