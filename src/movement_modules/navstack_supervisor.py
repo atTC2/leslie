@@ -5,13 +5,15 @@ from functools import partial
 
 import actionlib
 import rospy
-from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
+from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped, PoseWithCovarianceStamped
 from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
 from nav_msgs.srv import GetMap
 from std_msgs.msg import String
 # FOR TESTING: If we're trying relocalisation if we cannot reach the goal
 # from std_srvs.srv import Empty
 
+from state_machine import states, actions
+from util_modules import utils_maths
 from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import states, actions, state_util
 from util_modules import speech_engine
@@ -68,6 +70,9 @@ home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
 client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
 yes_no_listener = YesNoListener()
+
+goal_handler = None
+current_pose = None
 
 
 def state_callback(state_msg):
@@ -167,11 +172,35 @@ def goal_callback(goal):
     """
     print str(goal)
 
+def follow_callback(data):
+    global goal_handler, current_pose
+    state_json = json.loads(data.data)
+    if state_json['id'] != 'FOLLOW_PERP':
+        return
+
+
+    state_data = state_json['data']
+    # sends a goal to get robot to turn 90 left or right
+    angle = state_data['angle']
+    dist = state_data['distance']
+    goal_pose = utils_maths.new_point(current_pose, angle, dist)
+
+    if goal_handler != None:
+        goal_handler.cancel()
+    goal_handler = client.send_goal(goal_pose)
+
+
+def current_pose_callback(data):
+    global current_pose
+    current_pose = data.pose.pose # has covariance
+
 
 # ROS node stuff
 rospy.init_node('navstack_supervisor')
 state_pub = rospy.Publisher('/action', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
 state_util.prime_state_callback_with_starting_state(state_callback)
+rospy.Subscriber('/waypoint', String, follow_callback, queue_size=10)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
+rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, current_pose_callback, queue_size=10)
 rospy.spin()

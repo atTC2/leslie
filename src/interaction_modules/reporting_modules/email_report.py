@@ -1,3 +1,4 @@
+import rospy
 import json
 from datetime import datetime
 from functools import partial
@@ -8,6 +9,7 @@ import rospy
 from std_msgs.msg import String
 
 from interaction_modules.email_util import create_email, send_email, attach_body, attach_file
+from state_machine import actions, states, state_util
 from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import actions
 from util_modules import speech_engine
@@ -15,6 +17,22 @@ from util_modules.people_info import get_user_info
 
 yes_no_listener = YesNoListener()
 pub = rospy.Publisher('/action', String, queue_size=10)
+
+state_id = state_util.get_start_state()
+
+
+def _state_callback(state_msg):
+    """
+    Method called every `/state` change.
+    Updates the global variables `state_id` and `state_data`.
+    :param state_msg: The state change message.
+    :type state_msg: String
+    """
+    global state_id
+    state_id = json.loads(state_msg.data)['id']
+
+
+rospy.Subscriber('/state', String, _state_callback, queue_size=10)
 
 
 def ask_send_report_email(name, file_path):
@@ -26,6 +44,7 @@ def ask_send_report_email(name, file_path):
     :type name: str
     :type file_path: str
     """
+    global state_id
     # Check if they have an email address
     user_info = get_user_info(name)
     if 'email_address' not in user_info:
@@ -33,9 +52,13 @@ def ask_send_report_email(name, file_path):
         handled_alarm()
         return
 
-    # Give the incident reporter a new callback
-    speech_engine.say("would you like an incident report via email")
-    yes_no_listener.callback = partial(real_send_email, name, user_info['email_address'], file_path)
+    while state_id not in [states.LOST, states.THIEF, states.ACCIDENT]:
+        rospy.sleep(2)
+    if state_id == states.ACCIDENT:
+        speech_engine.say("would you like an incident report via email")
+        yes_no_listener.callback = partial(real_send_email, name, user_info['email_address'], file_path)
+    else:
+        real_send_email(name, user_info['email_address'], file_path, True)
 
 
 def real_send_email(name, recipient_address, file_path, would_like_email):
