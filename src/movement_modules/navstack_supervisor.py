@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import json
+from functools import partial
 
 import actionlib
 import rospy
@@ -77,6 +78,7 @@ def state_callback(state_msg):
     # determine goal based on state
     if state_json['id'] == states.MOVE_TO_TABLE:
         goal.target_pose.pose = table[state_json['data']['tableID']]
+        owner = state_json['data']['current_owner']
     elif state_json['id'] == states.MOVE_TO_HOME:
         goal.target_pose.pose = home_pose
     else:
@@ -94,7 +96,7 @@ def state_callback(state_msg):
         if state_json['id'] == states.MOVE_TO_TABLE:
             # Ensure the correct table has been reached
             speech_engine.say("is this the table you meant?")
-            yes_no_listener.callback = table_confirmed
+            yes_no_listener.callback = partial(table_confirmed, owner)
         elif state_json['id'] == states.MOVE_TO_HOME:
             print 'successfully reached home'
             action_data = {'id': actions.ARRIVED, 'data': {}}
@@ -104,15 +106,19 @@ def state_callback(state_msg):
         # TODO: Return home
 
 
-def table_confirmed(right_table):
+def table_confirmed(owner, right_table):
     """
     Handle whether the user says the robot has arrived at the correct or incorrect table
     :param right_table: Whether the user said the current location is correct
+    :param owner: Owner name
     :type right_table: bool
+    :type owner: str
     """
     action_data = {
-        'id': actions.ARRIVED if right_table else actions.WRONG_TABLE,
-        'data': {}
+        'id': actions.ARRIVED if right_table else actions.REJECT_TABLE,
+        'data': {
+            'current_owner': owner
+        }
     }
     state_pub.publish(String(json.dumps(action_data)))
 
