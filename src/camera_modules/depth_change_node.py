@@ -92,8 +92,6 @@ def get_distance(img):
                 print "ALARM!"
                 pub.publish(json.dumps({'id': actions.MOVEMENT_DETECTED, 'data': state_data}))
                 running = False
-            else:
-                print "fuk u cam"
 
             ith_frame = 0
             cv2.imshow('img', saved_full_image)
