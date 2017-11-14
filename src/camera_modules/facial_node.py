@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from functools import partial
 
 import face_recognition  # sudo pip install face_recognition
 import cv2
@@ -6,10 +7,11 @@ import facial_utils
 import rospy
 from std_msgs.msg import String
 import json
+
+from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import states, actions
 import camera_node
-from util_modules import config_access
-
+from util_modules import config_access, speech_engine
 
 if __name__ != '__main__':
     from sys import stderr
@@ -24,6 +26,8 @@ FRAME_THRESHOLD = config_access.get_config(config_access.KEY_FACE_FRAME_THRESHOL
 SLEEP_TIME = config_access.get_config(config_access.KEY_MIN_LOCKED_TIME_SECONDS)
 
 frame_count = 0
+
+yes_no_listener = YesNoListener()
 
 
 def identify(image):
@@ -99,14 +103,8 @@ def state_callback(state_msg):
 
     print "state_msg: ", state_msg
     state = json.loads(state_msg.data)
-    action = {}
-    action['data'] = {}
     if state['id'] == states.AT_TABLE:
-        print "got into if statement"
-        result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
-        print "result: ", result
-        action['id'] = actions.GOT_FACE
-        action['data']['current_owner'] = result[0]
+        get_face()
         
     elif state['id'] == states.LOCKED_AND_WAITING:
         owner = state['data']['current_owner']
@@ -114,11 +112,35 @@ def state_callback(state_msg):
         result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
         while owner not in result:
             result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
-        action['id'] = actions.FACE_RECOGNISED
-        action['data']['notify_owner'] = owner
-        action['data']['current_owner'] = ""
-    if action['data'] != {}:
+        action = {
+            'id': actions.FACE_RECOGNISED,
+            'data': {
+                'notify_owner': owner
+            }
+        }
         pub.publish(json.dumps(action))
+
+
+def get_face():
+    names = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
+    print "result: ", names
+    speech_engine.say('Are you ' + names[0])
+    yes_no_listener.callback = partial(got_face, names[0])
+
+
+def got_face(name, is_them):
+    if not is_them:
+        get_face()
+        return
+
+    speech_engine.say('hello ' + name)
+    action = {
+        'id': actions.GOT_FACE,
+        'data': {
+            'current_owner': name
+        }
+    }
+    pub.publish(json.dumps(action))
 
 
 rospy.init_node("facial_node")

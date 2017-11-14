@@ -20,6 +20,7 @@ state_machine = {
     # State                Action           -> State
     (WAIT_FOR_INSTRUCTION, CALLED_OVER):       MOVE_TO_TABLE,
     (MOVE_TO_TABLE,        ARRIVED):           AT_TABLE,
+    (MOVE_TO_TABLE,        WRONG_TABLE):       WAIT_FOR_INSTRUCTION,
     (AT_TABLE,             GOT_FACE):          LOCKING,
     (LOCKING,              READY_TO_LOCK):     LOCKED_AND_WAITING,
     (LOCKED_AND_WAITING,   MOVEMENT_DETECTED): ALARM,
@@ -41,10 +42,11 @@ def publish_state(data):
     """
     global current_state_id
     
-    state = {}
-    state['id'] = current_state_id
-    state['data'] = data
-    
+    state = {
+        'id': current_state_id,
+        'data': data
+    }
+
     print 'State:', state
     pub.publish(json.dumps(state))
 
