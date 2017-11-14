@@ -34,8 +34,10 @@ running = False
 state_id = None
 state_data = None
 
+thief_went_right = True #True for right, False for left
+
 def get_distance(img):
-    global running, state_id, state_data
+    global running, state_id, state_data, thief_went_right
     global alarm_count, ith_frame, last_images, mins, maxes, alarm
 
     if running == True:
@@ -57,18 +59,26 @@ def get_distance(img):
             cropped = unnorm_cv_image
 
             if len(last_images) >= locking_frame_count:
-                    count = 0
+                    count_left = 0
+                    count_right = 0
                     for i in range (0, max_height_cropped - min_height_cropped):
                          for j in range (0, max_width_cropped - min_width_cropped):
                              if(cropped[i][j][0] > maxes[i][j][0] or
                                 cropped[i][j][0] < mins[i][j][0]):
-                                 count += 1
-                                 cv2.rectangle(saved_full_image, (j, i), (j, i), (0, 0, 255), 2)
-                    if(count > min_pixel_change_count):
-                        print "Pixel change count: ", count
+                                if j < (max_width_cropped - min_width_cropped)/2:
+                                    count_left += 1
+                                else:
+                                    count_right +=1
+                                cv2.rectangle(saved_full_image, (j, i), (j, i), (0, 0, 255), 2)
+                    if(count_left + count_right > min_pixel_change_count):
+                        print "Pixel change count left / right: ", count_left, " / ", count_right
                         alarm_count += 1
                     else:
                         alarm_count = 0
+                    if(count_left < count_right):
+                        thief_went_right = True
+                    else:
+                        thief_went_right = False
             else:
                 last_images.append(cropped)
                 if(len(last_images) >= locking_frame_count):
@@ -90,6 +100,7 @@ def get_distance(img):
 
             if alarm_count > alarm_count_threshold:
                 print "ALARM!"
+                state_data['which_way'] = thief_went_right
                 pub.publish(json.dumps({'id': actions.MOVEMENT_DETECTED, 'data': state_data}))
                 running = False
 
