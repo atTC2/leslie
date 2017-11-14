@@ -93,7 +93,7 @@ def go_to_goal(goal, state_json, attempt):
     :param goal: The goal of the navstack pathfinding
     :param state_json: The state JSON (containing current state information)
     :param attempt: The attempt number
-    :type goal: PoseStamped
+    :type goal: MoveBaseGoal
     :type state_json: object
     :type attempt: int
     """
@@ -116,7 +116,7 @@ def go_to_goal(goal, state_json, attempt):
             }
             state_pub.publish(String(json.dumps(action_data)))
     else:
-        # Failed to reach goal'
+        # Failed to reach goal
         # leaving relocalisation test code in, as may be useful if we test to compare the two methods
         # rospy.wait_for_service('global_localization')
         # global_localization = rospy.ServiceProxy('global_localization', std_srvs.srvEmpty)
@@ -143,8 +143,8 @@ def table_confirmed(right_table):
 
 def goal_callback(goal):
     """
-    Prints any received goal to the screen (usefulfor debug)
-    :param goal: The goal of the navstack pathfinding
+    Prints any received goal to the screen (useful for debug)
+    :param goal: The goal of the navstack path finding
     :type goal: PoseStamped
     """
     print str(goal)
