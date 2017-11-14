@@ -4,6 +4,20 @@ import camera_node
 import numpy
 import imutils
 
+def detect_angle_to_person(image,rectangle):
+    
+    fov = 90    
+
+    mid_image = image.shape[1]/2.0
+    centre = ((rectangle[0][0] + rectangle[1][0])/2)
+    if centre > mid_image:
+        #print 
+        angle = ((fov/2.0)/mid_image) * (centre - mid_image)
+    else:
+        angle = ((fov/2.0)/mid_image) * (centre - mid_image)   
+    print "angle: ", angle
+    return angle
+
 def detect_people(image):
 
     image = imutils.resize(image, width=min(400, image.shape[1]))
@@ -19,6 +33,8 @@ def detect_people(image):
     # draw the original bounding boxes
     for (x, y, w, h) in rects:
         cv2.rectangle(orig, (x, y), (x + w, y + h), (0, 0, 255), 2)
+    	print "angle: ", detect_angle_to_person(image, ((x, y), (x + w, y + h)))
+    
     
     return orig
     # apply non-maxima suppression to the bounding boxes using a
@@ -59,5 +75,6 @@ def whatever(camera_checker):
 
 
 
-if __name__ == "_main_":
+if __name__ == "__main__":
+    print "start"
     whatever(detect_people)
