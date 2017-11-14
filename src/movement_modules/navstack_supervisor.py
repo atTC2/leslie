@@ -4,12 +4,13 @@ import json
 
 import actionlib
 import rospy
-from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
+from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped, PoseWithCovarianceStamped
 from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
 from nav_msgs.srv import GetMap
 from std_msgs.msg import String
 
 from state_machine import states, actions
+from util_modules import utils_maths
 
 if __name__ != '__main__':
     from sys import stderr
@@ -56,6 +57,8 @@ home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
 #  create action client, interface with navstack via client-server model
 client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
+goal_handler = None
+current_pose = None
 
 def state_callback(state_msg):
     """
@@ -67,6 +70,7 @@ def state_callback(state_msg):
     :param state_msg: The current state of the robot's State Machine and data about table if applicable
     :type state_msg: std_msgs.msg.String
     """
+    print "CALLED STATE CALLBACK"
     global home_pose, client
     state_json = json.loads(state_msg.data)
     goal = MoveBaseGoal()
@@ -75,6 +79,9 @@ def state_callback(state_msg):
         goal.target_pose.pose = table[state_json['data']['tableID']]
     elif state_json['id'] == states.MOVE_TO_HOME:
         goal.target_pose.pose = home_pose
+    elif state_json['id'] == "FOLLOW_PERP":
+        follow_callback(state_msg)
+        return
     else:
         return
 
@@ -105,11 +112,37 @@ def goal_callback(goal):
     """
     print str(goal)
 
+def follow_callback(data):
+    global goal_handler, current_pose
+    state_json = json.loads(data.data)
+    if state_json['id'] != 'FOLLOW_PERP':
+        return
+
+
+    state_data = state_json['data']
+    # sends a goal to get robot to turn 90 left or right
+    angle = state_data['angle']
+    dist = state_data['distance']
+    print 'calc goal'
+    goal_pose = utils_maths.new_point(current_pose, angle, dist)
+    print 'got goal'
+
+    if goal_handler != None:
+        goal_handler.cancel()
+    goal_handler = client.send_goal(goal_pose)
+
+def current_pose_callback(data):
+    global current_pose
+    current_pose = data.pose.pose # has covariance
+    print 'GETTING AMCL_POSE', current_pose
+
 
 rospy.init_node('navstack_supervisor')
 state_pub = rospy.Publisher('/action', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
-rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
+rospy.Subscriber('/waypoint', String, follow_callback, queue_size=10)
+rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=10)
+rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, current_pose_callback, queue_size=10)
 
 # TESTING
 # state_data = {'id': states.MOVE_TO_TABLE, 'data': {'tableID': 1}}

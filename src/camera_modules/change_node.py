@@ -5,6 +5,7 @@ import cv2
 import os
 import subprocess
 import rospy
+import numpy as np
 from threading import Thread
 from Queue import Queue
 from datetime import datetime
@@ -13,6 +14,7 @@ from state_machine import states, actions
 from camera_modules import change_util
 from camera_modules.change_util import crop_to_table, convert_to_grey, calculate_contours, save_frame, draw_changes
 from util_modules import config_access
+from util_modules import utils_detect
 from interaction_modules.reporting_modules import email_report
 
 if __name__ != '__main__':
@@ -25,6 +27,7 @@ if __name__ != '__main__':
 FRAME_QUEUE_SIZE = config_access.get_config(config_access.KEY_CHANGE_FRAME_QUEUE_SIZE)
 previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
 change_history = Queue(maxsize=FRAME_QUEUE_SIZE)
+previous_contours = []
 
 # Change detection parameters
 MIN_CONTOUR_AREA = config_access.get_config(config_access.KEY_CHANGE_MIN_CONTOUR_AREA)
@@ -34,6 +37,8 @@ CHANGE_SIGNIFICANT_CHANGE_THRESHOLD = config_access.get_config(config_access.KEY
 running = False
 state_id = None
 state_data = None
+
+thief_went_right = True
 
 
 def detect_change(original_image):
@@ -45,10 +50,13 @@ def detect_change(original_image):
     :return: True is change was detected, False if not
     :rtype: bool
     """
+
+
     global previous_frames
     global state_data
     global pub
     global MIN_CONTOUR_AREA
+    global previous_contours
 
     image = crop_to_table(original_image)
 
@@ -64,13 +72,16 @@ def detect_change(original_image):
 
     contours = calculate_contours(grey, previous_frames.get())
 
+    decide_which_way(contours, original_image)
     # Has there been a change?
     changed = False
+    saved_countour_list = []
     for contour in contours:
         # If the contour is too small, ignore it
         if cv2.contourArea(contour) < MIN_CONTOUR_AREA:
             continue
         else:
+            saved_countour_list.append(contour)
             changed = True
             break
 
@@ -88,7 +99,31 @@ def detect_change(original_image):
     if changed:
         save_frame(original_image)
 
+    previous_contours.append(saved_countour_list)
+    if(len(previous_contours) > FRAME_QUEUE_SIZE):
+        previous_contours = previous_contours[1:]
+
     return changed
+
+
+def decide_which_way(contours, img):
+    global thief_went_right
+    if(len(contours) > 0):
+        vertical, the_width = img.shape[:2]
+        all_left = 0
+        all_right = 0
+        for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            area = w * h
+            if x + w <= (the_width/2):
+                all_left += area
+            if x < (the_width/2) and x+w > (the_width/2):
+                all_left += area/(the_width/2 - x)
+                all_right += area/(x + w - the_width/2)
+            if x + w >= (the_width/2):
+                all_right += area
+
+        thief_went_right = all_right > all_left
 
 
 def detect_significant_change(original_image):
@@ -100,6 +135,7 @@ def detect_significant_change(original_image):
     :rtype: bool
     """
     global change_history
+    global previous_contours
     global CHANGE_SIGNIFICANT_CHANGE_THRESHOLD
 
     # Find out if there is 'change' in the current frame
@@ -108,7 +144,7 @@ def detect_significant_change(original_image):
     change_history.put(changed)
     # We need to have at least the queue full before we do the rest of this
     if not change_history.full():
-        return False
+        return False, None
     # Remove the oldest change history
     change_history.get()
     # Decide if we need to return a significant change
@@ -119,8 +155,29 @@ def detect_significant_change(original_image):
             change_history_detected_count += 1
         change_history.put(change_history_change)
 
+    alarm = change_history_detected_count > (FRAME_QUEUE_SIZE * CHANGE_SIGNIFICANT_CHANGE_THRESHOLD)
+
+    decided_colour = None
+    if alarm == True:
+
+        avg_b = 0
+        avg_g = 0
+        avg_r = 0
+        total = 0
+        for countours in previous_contours:
+            for countour in countours:
+                x, y, w, h = cv2.boundingRect(countour)
+                if(len(countour) > 0):
+                    b,g,r = utils_detect.make_histogram(original_image, x, y, x + w, y + h, False)
+                    avg_b += b
+                    avg_g += g
+                    avg_r += r
+                    total += 1
+        decided_colour = [avg_b/total, avg_g/total, avg_r/total]
+        print decided_colour
+
     # If over half of the recent change detection is 'change detected', then we should return a significant change
-    return change_history_detected_count > (FRAME_QUEUE_SIZE * CHANGE_SIGNIFICANT_CHANGE_THRESHOLD)
+    return alarm, decided_colour
 
 
 def reset(cap):
@@ -130,8 +187,10 @@ def reset(cap):
     :type cap: VideoCapture
     """
     global previous_frames
+
     global state_id
     global change_history
+    global previous_contours
 
     # Release capture and destroy windows
     cap.release()
@@ -141,6 +200,7 @@ def reset(cap):
     change_util.crop_right = None
     previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
     change_history = Queue(maxsize=FRAME_QUEUE_SIZE)
+    previous_contours = Queue(maxsize=FRAME_QUEUE_SIZE)
 
     if change_util.video_writer is not None:
         change_util.video_writer.release()
@@ -175,7 +235,7 @@ def run():
     global state_id
     global state_data
 
-    cap = cv2.VideoCapture(config_access.get_config(config_access.KEY_CAMERA_INDEX_TABLE))
+    cap = cv2.VideoCapture(0)
 
     running = True
     while running:
@@ -183,11 +243,15 @@ def run():
         ret, frame = cap.read()
 
         # Apply the method
-        changed = detect_significant_change(frame)
+        changed, decided_colour = detect_significant_change(frame)
 
+        #print changed, decided_colour
         if changed and state_id == states.LOCKED_AND_WAITING:
             # publish alarm
+            state_data['which_way'] = thief_went_right
+            state_data['colour'] = decided_colour
             pub.publish(json.dumps({'id': actions.MOVEMENT_DETECTED, 'data': state_data}))
+            running = False
 
         cv2.imshow('Table View', frame)
         cv2.waitKey(1)
@@ -205,12 +269,12 @@ def callback(state_msg):
     global running
     global state_id
     global state_data
-
     state_json = json.loads(state_msg.data)
     state_id = state_json['id']
     state_data = state_json['data']
-
+    print state_json
     if state_id == states.LOCKING:
+        print 'Locking'
         # Start finding table in a new thread...
         Thread(target=run).start()
     elif state_id == states.LOCKED_AND_WAITING or state_id == states.ALARM:
@@ -227,6 +291,6 @@ rospy.Subscriber('/state', String, callback, queue_size=10)
 pub = rospy.Publisher('/action', String, queue_size=10)
 
 # TESTING
-# callback(String(json.dumps({'id': states.LOCKING, 'data': {'current_owner': 'Seb'}})))
+#callback(String(json.dumps({'id': states.LOCKING, 'data': {'current_owner': 'Seb'}})))
 
 rospy.spin()
