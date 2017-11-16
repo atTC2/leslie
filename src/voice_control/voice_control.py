@@ -17,13 +17,12 @@ if __name__ != '__main__':
 state = 1  # State of voice control
 selected_table = -1  # table selected by user [0-4]
 print_table = -1  # table selected by user plus 1 for speech [1-5]
+owner = 0
 
 
 class VoiceControl:
     # define the constructor of the class
     def __init__(self):
-
-        speech_engine.say("which table would you like to go to")
 
         # initialize the ROS node with a name voice_teleop
         rospy.init_node('voice_control')
@@ -37,14 +36,14 @@ class VoiceControl:
 
         self.pub = rospy.Publisher('/action', String, queue_size=10)
 
-        self.at_home = True
+        self.listening = False
 
     # choose correct question and voice response for current state
     def voice_command_callback(self, msg):
         global state
         global selected_table
 
-        if not self.at_home:
+        if not self.listening:
             # Don't run now
             return
 
@@ -58,15 +57,17 @@ class VoiceControl:
 
     def state_call_back(self, data):
         global state
+        global owner
 
         state_json = json.loads(data.data)
         state_id = state_json['id']
-        if state_id == states.WAIT_FOR_INSTRUCTION:
+        if state_id == states.LISTENING_FOR_TABLE:
             speech_engine.say("which table would you like to go to")
             state = 1
-            self.at_home = True
+            owner = state_json['data']['current_owner']
+            self.listening = True
         else:
-            self.at_home = False
+            self.listening = False
 
 
 # Allow user to select table
@@ -107,20 +108,17 @@ def check_table(self, msg):
     global selected_table
     global print_table
     global state
+    global owner
 
     # User response to verifying table selected
     yesno = msg.data
 
     # If table correct publish table number to state machine
     if yesno == 'yes':
-        self.at_home = False
         speech_engine.say("Going to table " + str(print_table))
-        action = {
-            'id': actions.CALLED_OVER,
-            'data': {
-                'tableID': selected_table
-            }
-        }
+        action = {}
+        action['id'] = actions.CALLED_OVER
+        action['data'] = {'tableID': selected_table, 'current_owner': owner}
         self.pub.publish(json.dumps(action))
     # If table not correct ask again which table leslie should go to
     elif yesno == 'no':

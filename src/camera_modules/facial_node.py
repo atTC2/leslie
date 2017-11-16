@@ -103,7 +103,7 @@ def state_callback(state_msg):
 
     print "state_msg: ", state_msg
     state = json.loads(state_msg.data)
-    if state['id'] == states.AT_TABLE:
+    if state['id'] == states.AT_HOME:
         get_face()
         
     elif state['id'] == states.LOCKED_AND_WAITING:
@@ -135,7 +135,7 @@ def got_face(name, is_them):
 
     speech_engine.say('hello ' + name)
     action = {
-        'id': actions.GOT_FACE,
+        'id': actions.FACE_DETECTED,
         'data': {
             'current_owner': name
         }
@@ -146,4 +146,5 @@ def got_face(name, is_them):
 rospy.init_node("facial_node")
 pub = rospy.Publisher("/action", String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
+state_callback(String(json.dumps({"id": states.AT_HOME})))
 rospy.spin()

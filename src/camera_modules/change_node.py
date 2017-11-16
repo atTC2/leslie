@@ -58,7 +58,7 @@ def detect_change(original_image):
     if not previous_frames.full():
         previous_frames.put(grey)
         return False
-    elif state_id == states.LOCKING:
+    elif state_id == states.AT_TABLE:
         # Now locked, say so
         pub.publish(json.dumps({'id': actions.READY_TO_LOCK, 'data': state_data}))
 
@@ -210,7 +210,7 @@ def callback(state_msg):
     state_id = state_json['id']
     state_data = state_json['data']
 
-    if state_id == states.LOCKING:
+    if state_id == states.AT_TABLE:
         # Start finding table in a new thread...
         Thread(target=run).start()
     elif state_id == states.LOCKED_AND_WAITING or state_id == states.ALARM:

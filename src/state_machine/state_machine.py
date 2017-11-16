@@ -18,20 +18,22 @@ if __name__ != '__main__':
 # Mapping of state + action = state
 state_machine = {
     # State                Action           -> State
-    (WAIT_FOR_INSTRUCTION, CALLED_OVER):       MOVE_TO_TABLE,
+    (AT_HOME,              CALLED_OVER):       MOVE_TO_TABLE,
+    (AT_HOME,              FACE_DETECTED):     LISTENING_FOR_TABLE,
+    (LISTENING_FOR_TABLE,  CALLED_OVER):       MOVE_TO_TABLE,
     (MOVE_TO_TABLE,        ARRIVED):           AT_TABLE,
-    (MOVE_TO_TABLE,        WRONG_TABLE):       WAIT_FOR_INSTRUCTION,
-    (AT_TABLE,             GOT_FACE):          LOCKING,
-    (LOCKING,              READY_TO_LOCK):     LOCKED_AND_WAITING,
+    (MOVE_TO_TABLE,        REJECT_TABLE):      LISTENING_FOR_TABLE,
+    (REJECT_TABLE,         CALLED_OVER):       MOVE_TO_TABLE,
+    (AT_TABLE,              READY_TO_LOCK):    LOCKED_AND_WAITING,
     (LOCKED_AND_WAITING,   MOVEMENT_DETECTED): ALARM,
     (ALARM,                FACE_RECOGNISED):   ALARM_REPORT,
     (ALARM_REPORT,         ALARM_HANDLED):     MOVE_TO_HOME,
     (LOCKED_AND_WAITING,   FACE_RECOGNISED):   MOVE_TO_HOME,
-    (MOVE_TO_HOME,         ARRIVED):           WAIT_FOR_INSTRUCTION
+    (MOVE_TO_HOME,         ARRIVED):           AT_HOME
 }
 
-# Always start on WAIT FOR INSTRUCTION
-current_state_id = WAIT_FOR_INSTRUCTION
+# Always start on AT_HOME
+current_state_id = AT_HOME
 
 
 def publish_state(data):

@@ -26,7 +26,7 @@
   </include>
   <node name="navstack_supervisor" pkg="leslie" type="navstack_supervisor.py" output="screen" />
   <node name="facial_node" pkg="leslie" type="facial_node.py" output="screen"
-        launch-prefix="$(arg sleep) 20" />
+        launch-prefix="$(arg sleep) 5" />
   <include file="$(find leslie)/resources/launch_files/voice.launch">
       <arg name="sleep_multiplier" value="$(arg sleep_multiplier)" />
   </include>
