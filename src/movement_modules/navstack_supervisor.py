@@ -79,7 +79,6 @@ def state_callback(state_msg):
     # determine goal based on state
     if state_json['id'] == states.MOVE_TO_TABLE:
         goal.target_pose.pose = table[state_json['data']['tableID']]
-        owner = state_json['data']['current_owner']
     elif state_json['id'] == states.MOVE_TO_HOME:
         goal.target_pose.pose = home_pose
     else:
@@ -100,16 +99,18 @@ def go_to_goal(goal, state_json, attempt):
     :type attempt: int
     """
     client.wait_for_server()  # blocks indefinitely
-    #  sets goal, send to navstack server and waits for navstack to run
+    # sets goal, send to navstack server and waits for navstack to run
     goal.target_pose.header.frame_id = "/map"
     client.send_goal_and_wait(goal)
 
-    #  after navstack completes, get its 'state' and check if reached goal
+    # after navstack completes, get its 'state' and check if reached goal
     if client.get_state() == actionlib.GoalStatus.SUCCEEDED:
         if state_json['id'] == states.MOVE_TO_TABLE:
             # Ensure the correct table has been reached
             speech_engine.say("is this the table you meant?")
-            yes_no_listener.callback = partial(table_confirmed, owner)
+            owner = state_json['data']['current_owner']
+            friend = state_json['data']['friend']
+            yes_no_listener.callback = partial(table_confirmed, owner, friend)
         elif state_json['id'] == states.MOVE_TO_HOME:
             print 'successfully reached home'
             action_data = {
@@ -130,18 +131,21 @@ def go_to_goal(goal, state_json, attempt):
         go_to_goal(goal, state_json, attempt + 1)
 
 
-def table_confirmed(owner, right_table):
+def table_confirmed(owner, friend, right_table):
     """
     Handle whether the user says the robot has arrived at the correct or incorrect table
-    :param right_table: Whether the user said the current location is correct
     :param owner: Owner name
-    :type right_table: bool
+    :param friend: The added friend
+    :param right_table: Whether the user said the current location is correct
     :type owner: str
+    :type friend: str
+    :type right_table: bool
     """
     action_data = {
         'id': actions.ARRIVED if right_table else actions.REJECT_TABLE,
         'data': {
-            'current_owner': owner
+            'current_owner': owner,
+            'friend': friend
         }
     }
     state_pub.publish(String(json.dumps(action_data)))

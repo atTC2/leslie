@@ -12,7 +12,7 @@ from std_msgs.msg import String
 from state_machine import states, actions
 from camera_modules import change_util
 from camera_modules.change_util import crop_to_table, convert_to_grey, calculate_contours, save_frame, draw_changes
-from util_modules import config_access
+from util_modules import config_access, speech_engine
 from interaction_modules.reporting_modules import email_report
 
 if __name__ != '__main__':
@@ -211,6 +211,7 @@ def callback(state_msg):
     state_data = state_json['data']
 
     if state_id == states.AT_TABLE:
+        speech_engine.say('ok, locking on table now')
         # Start finding table in a new thread...
         Thread(target=run).start()
     elif state_id == states.LOCKED_AND_WAITING or state_id == states.ALARM:

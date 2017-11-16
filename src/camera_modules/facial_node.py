@@ -108,9 +108,10 @@ def state_callback(state_msg):
         
     elif state['id'] == states.LOCKED_AND_WAITING:
         owner = state['data']['current_owner']
+        friend = state['data']['friend']
         rospy.sleep(SLEEP_TIME)
         result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
-        while owner not in result:
+        while owner not in result and friend not in result:
             result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
         action = {
             'id': actions.FACE_RECOGNISED,
@@ -122,6 +123,10 @@ def state_callback(state_msg):
 
 
 def get_face():
+    """
+    Gets faces currently in frame, selects the first one, and confirms with the user whether that person is the
+    intended locker
+    """
     names = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
     print "result: ", names
     speech_engine.say('Are you ' + names[0])
@@ -129,11 +134,18 @@ def get_face():
 
 
 def got_face(name, is_them):
+    """
+    Handles when a face has been detected and whether or not is the intended locker
+    :param name: The name of the detected person
+    :param is_them: Whether that person has been confirmed as the locker
+    :type name: str
+    :type is_them: bool
+    """
     if not is_them:
         get_face()
         return
 
-    speech_engine.say('hello ' + name)
+    speech_engine.say('hello ' + name + ', I am Leslie, the Personal Item Protection System')
     action = {
         'id': actions.FACE_DETECTED,
         'data': {

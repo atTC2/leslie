@@ -4,8 +4,8 @@ import rospy
 import json
 from std_msgs.msg import String
 from state_machine import actions, states
-from util_modules import speech_engine
-
+from get_table import GetTable
+from get_friend import GetFriend
 
 if __name__ != '__main__':
     from sys import stderr
@@ -14,123 +14,80 @@ if __name__ != '__main__':
     exit(1)
 
 
-state = 1  # State of voice control
-selected_table = -1  # table selected by user [0-4]
-print_table = -1  # table selected by user plus 1 for speech [1-5]
-owner = 0
+owner = None
+friend = None
+get_table = GetTable()
+get_friend = GetFriend()
 
 
-class VoiceControl:
-    # define the constructor of the class
-    def __init__(self):
+def got_friend(selected_friend):
+    """
+    Takes a selected friend, stores tha information, and starts the process of listing for table instructions
+    :param selected_friend: The friend selected, or None if no friend selected
+    :type selected_friend: str
+    """
+    global friend
+    get_friend.stop_listening()
+    friend = selected_friend
+    get_table.listen()
 
-        # initialize the ROS node with a name voice_teleop
-        rospy.init_node('voice_control')
 
-        rospy.Subscriber('/state', String, self.state_call_back, queue_size=10)
+def got_table(selected_table):
+    """
+    Takes a selected table and publishes the competed action, with friend information previously gathered
+    :param selected_table: The selected table by the user
+    :type selected_table: int
+    """
+    global owner, friend
+    get_table.stop_listening()
+    action = {
+        'id': actions.CALLED_OVER,
+        'data': {
+            'tableID': selected_table,
+            'current_owner': owner,
+            'friend': friend
+        }
+    }
+    pub.publish(json.dumps(action))
 
-        # Subscribe to the /recognizer/output topic to receive voice commands.
-        rospy.Subscriber('/recognizer/output', String, self.voice_command_callback)
 
-        rospy.loginfo("voice_control - ready to receive voice commands")
+def state_callback(state_msg):
+    """
+    Handles stage changes
+    :param state_msg: The new state information
+    :type state_msg: std_msgs.msg.String
+    :return:
+    """
+    global get_friend, get_table, owner, friend
+    state_json = json.loads(state_msg.data)
+    state_id = state_json['id']
+    if state_id == states.LISTENING_FOR_TABLE:
+        owner = state_json['data']['current_owner']
 
-        self.pub = rospy.Publisher('/action', String, queue_size=10)
-
-        self.listening = False
-
-    # choose correct question and voice response for current state
-    def voice_command_callback(self, msg):
-        global state
-        global selected_table
-
-        if not self.listening:
-            # Don't run now
-            return
-
-        if state == 1:
-            print 'Processing table instruction...'
-            selected_table = get_table(msg)
-
-        elif state == 2:
-            print 'Processing instruction confirmation for table', selected_table
-            check_table(self, msg)
-
-    def state_call_back(self, data):
-        global state
-        global owner
-
-        state_json = json.loads(data.data)
-        state_id = state_json['id']
-        if state_id == states.LISTENING_FOR_TABLE:
-            speech_engine.say("which table would you like to go to")
-            state = 1
-            owner = state_json['data']['current_owner']
-            self.listening = True
+        # Determine if they have already selected (or not selected) a friend (i.e. have rejected a table)
+        if 'friend' not in state_json['data']:
+            # Not before had the friend option
+            get_friend.listen()
         else:
-            self.listening = False
+            # Already selected friend, so save it here and go straight to table selection
+            friend = state_json['data']['friend']
+            get_table.listen()
 
-
-# Allow user to select table
-def get_table(msg):
-    global state
-    global print_table
-
-    # Get the motion command from the recognized phrase
-    table = -1
-    command = msg.data
-    # User selects a table with voice control
-    if command.find('one') != -1:
-        table = 0
-    elif command.find('two') != -1:
-        table = 1
-    elif command.find('three') != -1:
-        table = 2
-    elif command.find('four') != -1:
-        table = 3
-    elif command.find('five') != -1:
-        table = 4
-    else:  # command not found
-        print ("Command not recognised")
-
-    # If table has been selected check it is correct
-    if table != -1:
-        print("change state")
-        state = 2
-        print_table = table + 1
-        speech_engine.say("would you like to go to table " + str(print_table))
-    # Re-ask the question if command not recognised
-
-    return table
-
-
-# Allow user to verify table
-def check_table(self, msg):
-    global selected_table
-    global print_table
-    global state
-    global owner
-
-    # User response to verifying table selected
-    yesno = msg.data
-
-    # If table correct publish table number to state machine
-    if yesno == 'yes':
-        speech_engine.say("Going to table " + str(print_table))
-        action = {}
-        action['id'] = actions.CALLED_OVER
-        action['data'] = {'tableID': selected_table, 'current_owner': owner}
-        self.pub.publish(json.dumps(action))
-    # If table not correct ask again which table leslie should go to
-    elif yesno == 'no':
-        speech_engine.say("which table would you like to go to")
-        state = 1
-    # If user says yes nor no then re-ask the question
     else:
-        print("command not recognised")
+        # Ensure nothing is listening and reset values
+        get_table.stop_listening()
+        get_friend.stop_listening()
+        owner = None
+        friend = None
 
 
-try:
-    VoiceControl()
-    rospy.spin()
-except rospy.ROSInterruptException:
-    rospy.loginfo("Voice navigation terminated.")
+# Set callbacks
+get_friend.callback = got_friend
+get_table.callback = got_table
+
+# Setup ROS node
+rospy.init_node('voice_control')
+rospy.Subscriber('/state', String, state_callback, queue_size=10)
+rospy.loginfo("voice_control - ready to receive voice commands")
+pub = rospy.Publisher('/action', String, queue_size=10)
+rospy.spin()

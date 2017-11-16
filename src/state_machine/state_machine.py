@@ -24,7 +24,7 @@ state_machine = {
     (MOVE_TO_TABLE,        ARRIVED):           AT_TABLE,
     (MOVE_TO_TABLE,        REJECT_TABLE):      LISTENING_FOR_TABLE,
     (REJECT_TABLE,         CALLED_OVER):       MOVE_TO_TABLE,
-    (AT_TABLE,              READY_TO_LOCK):    LOCKED_AND_WAITING,
+    (AT_TABLE,             READY_TO_LOCK):     LOCKED_AND_WAITING,
     (LOCKED_AND_WAITING,   MOVEMENT_DETECTED): ALARM,
     (ALARM,                FACE_RECOGNISED):   ALARM_REPORT,
     (ALARM_REPORT,         ALARM_HANDLED):     MOVE_TO_HOME,

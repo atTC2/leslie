@@ -16,3 +16,7 @@ def get_user_info(key):
     :rtype: dict[String, String]
     """
     return config[key]
+
+
+def is_user_in_system(key):
+    return key in config
