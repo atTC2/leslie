@@ -5,6 +5,8 @@
   <param name="delta" value="0.05" />
   <param name="configurations" value="$(find leslie)/resources/configurations/leslie.json" />
   
+  <arg name="rviz" default="true"/>
+  <arg name="rqt_graph" default="false"/>
   <arg name="rviz_config_file" default="laser_and_particles.rviz"/>
   <arg name="map_file" default="$(find leslie)/resources/maps/newlowerground.yaml"/>
   
@@ -16,6 +18,7 @@
 
   <!-- Run rviz -->
   <node name="rviz" pkg="rviz" type="rviz"
+        if="$(arg rviz)"
         args="-d $(find leslie)/resources/rviz_configs/$(arg rviz_config_file)"
         launch-prefix="$(arg sleep) 10" />
 
@@ -38,8 +41,7 @@
         launch-prefix="$(arg sleep) 20" />
   
   <!-- Run RQT Graph -->
-  <!--
   <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph" output="screen"
+        if="$(arg rqt_graph)"
         launch-prefix="$(arg sleep) 5" />
-  -->
 </launch>
