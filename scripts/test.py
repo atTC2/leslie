@@ -10,7 +10,7 @@ if __name__ == "__main__":
     rospy.init_node('tester')
     
     state_data = {'id':'FOLLOW_PERP', 'data': {
-        'angle': numpy.random.randint(-45, 45),
+        'angle': -45,
         'distance': 1
     }}
     pub.publish(json.dumps(state_data))

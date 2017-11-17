@@ -123,7 +123,7 @@ def follow_callback(data):
     angle = state_data['angle']
     dist = state_data['distance']
     print 'calc goal'
-    goal_pose = utils_maths.new_point(current_pose, -1 * angle, dist)
+    goal_pose = utils_maths.new_point(current_pose, angle, dist)
     print 'got goal'
     
     if goal_handler != None:
@@ -132,8 +132,8 @@ def follow_callback(data):
 
 def current_pose_callback(data):
     global current_pose
-    print 'GETTING AMCL_POSE'
-    current_pose = data.pose.pose
+    current_pose = data.pose.pose # has covariance
+    print 'GETTING AMCL_POSE', current_pose
 
 
 rospy.init_node('navstack_supervisor')
