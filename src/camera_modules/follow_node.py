@@ -21,6 +21,7 @@ import math
 from std_msgs.msg import String
 from state_machine import states, actions
 from cv_bridge import CvBridge, CvBridgeError
+from util_modules import utils_detect
 
 history = []
 history_rgb = []
@@ -48,7 +49,7 @@ def detect_angle_to_person(image,rectangle):
 
 def detect_people(image):
 
-    global latest_rekt_global
+    global latest_rekt_global, locked_colour
 
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
@@ -78,23 +79,26 @@ def detect_people(image):
         rects = numpy.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
-        maxX = 0
-        check = 0
-
-    # draw the final bounding boxes
+        closest_colour = None
+        closest_colour_diff = 99999999 # some max number
+        
+        # draw the final bounding boxes
         for (xA, yA, xB, yB) in pick:
             #print (xA, yA, xB, yB)
             cv2.rectangle(orig, (xA, yA), (xB, yB), (0, 255, 0), 2)
-            check = abs(xA-xB)
-            if check > maxX:
-                maxX = check
-                largest_rekt = ((xA, yA), (xB, yB))
-                latest_rekt_global = largest_rekt
+            avg_rect_colour = utils_detect.detect_avg_color2(orig, (xA, yA), (xB, yB))
+            colour_diff = utils_detect.euclidian_colour_diff(avg_rect_colour, locked_colour)
+            
+            if colour_diff < closest_colour_diff:
+                closest_colour_diff = euclidian_colour_diff
+                closest_rekt = ((xA, yA), (xB, yB))
+                latest_rekt_global = closest_rekt
                 angle = detect_angle_to_person(orig, ((xA, yA), (xB, yB)))
+                            
         #print "angle: ", angle
         lost = False
 
-    return orig, angle, lost, largest_rekt
+    return orig, angle, lost, closest_rekt
 
 def get_distance(((xA,yA),(xB,yB))):
     global history
@@ -224,7 +228,7 @@ def update_distro(mean, std_dev):
     global distro, distro_size
     minimum_value = 0.0000001
     importance = 10
-
+p
     other_distro = [normpdf(i, mean, std_dev) for i in range(0, distro_size)]
 
     for i in range(0, 400):
