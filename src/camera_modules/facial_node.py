@@ -36,7 +36,7 @@ def identify(image):
     :param image: The image to perform facial recognition on
     :type image: numpy.ndarray
     :return: The name of the person identified, or None if no one is detected
-    :rtype: String or None
+    :rtype: str[] or None
     """
     global saved_encodings
     face_locations = face_recognition.face_locations(image)
@@ -79,7 +79,7 @@ def detect(image):
     :param image: The image to perform facial recognition on
     :type image: numpy.ndarray
     :return: The name of the person identified, or None if no one is detected
-    :rtype: String or None
+    :rtype: str[] or None
     """
     global frame_count, FRAME_THRESHOLD
     data = None
@@ -110,9 +110,11 @@ def state_callback(state_msg):
         owner = state['data']['current_owner']
         friend = state['data']['friend']
         rospy.sleep(SLEEP_TIME)
-        result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
+        result = []
         while owner not in result and friend not in result:
-            result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
+            result = camera_node.get_data_from_camera(CAMERA_INDEX, detect, states.LOCKED_AND_WAITING, states.ALARM)
+            if result is None:
+                return
         action = {
             'id': actions.FACE_RECOGNISED,
             'data': {
@@ -130,7 +132,9 @@ def get_face():
     Gets faces currently in frame, selects the first one, and confirms with the user whether that person is the
     intended locker
     """
-    names = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
+    names = camera_node.get_data_from_camera(CAMERA_INDEX, detect, states.AT_HOME)
+    if names is None:
+        return
     print "result: ", names
     speech_engine.say('Are you ' + names[0])
     yes_no_listener.callback = partial(got_face, names[0])
