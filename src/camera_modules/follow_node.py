@@ -30,6 +30,8 @@ global_lock = Lock()
 distro = []
 distro_size = 400
 
+locked_colour = None
+
 def detect_angle_to_person(image,rectangle):
 
     fov = 90
@@ -161,7 +163,7 @@ def rgb_color(img):
 
 
 def decide_on_thief_status():
-    global history_rgb, max_history, latest_rekt_global
+    global history_rgb, max_history, latest_rekt_global, locked_colour
     counter = 0
     close_threshold = 1500
     while True:
@@ -253,12 +255,14 @@ def callback(state_msg):
     :param state_msg: The new state information
     :type state_msg: std_msgs.msg.String
     """
+    global locked_colour
     #global SLEEP_TIME
     init_distro()
     print "state_msg: ", state_msg
     state = json.loads(state_msg.data)
     action = {}
     if state['id'] == states.ALARM:
+        locked_colour = state['data']['colour']
         result = decide_on_thief_status()
 
         print "result: ", result
