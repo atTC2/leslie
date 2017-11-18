@@ -1,4 +1,4 @@
-# leslie
+# Leslie  [![Build Status](https://travis-ci.com/TomBClarke/leslie.svg?token=Ha8pJ3ZDnTf8gVqKqowU&branch=master)](https://travis-ci.com/TomBClarke/leslie)
 UoB CS Intelligent Robotics Exercise 2
 
 ## Getting started

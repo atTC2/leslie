@@ -9,9 +9,6 @@ add-apt-repository -y ppa:mc3man/trusty-media
 echo -n 'Running `apt-get update`... '
 apt-get update -qq
 echo 'done'
-echo 'Running `apt-get dist-upgrade`...' # No -n, since it outputs.
-apt-get dist-upgrade -qq
-echo 'done'
 echo -n 'Running `apt-get install vlc vlc-plugin-libde265`... '
 apt-get install -qq vlc vlc-plugin-libde265
 echo 'done'

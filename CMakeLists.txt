@@ -189,6 +189,13 @@ include_directories(
 ## Testing ##
 #############
 
+# rostest
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest(resources/test_launch_files/state_test.test)
+  add_rostest(resources/test_launch_files/config_test.test)
+endif()
+
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_leslie.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
