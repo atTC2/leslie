@@ -19,6 +19,7 @@ import math
 #from Queue import Queue
 #from datetime import datetime
 from std_msgs.msg import String
+from nav_msgs.msg import Odometry
 from state_machine import states, actions
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -27,6 +28,7 @@ history_rgb = []
 max_history = 10
 latest_rekt_global = None
 global_lock = Lock()
+distro_lock = Lock()
 distro = []
 distro_size = 400
 
@@ -105,7 +107,7 @@ def get_distance(((xA,yA),(xB,yB))):
         avgY = (yB + yA)/7
 	x_diff_offset = (xB - xA) * 5 / 100
 	y_diff_offset = (yB - yA) * 15 / 100
-	   
+
 	xB = avgX + x_diff_offset
 	xA = avgX - x_diff_offset
 	yB = 3 * avgY + y_diff_offset
@@ -144,7 +146,7 @@ def save_distance(img):
     if(latest_rekt_global is not None):
         ((xA, yA), (xB,yB)) = latest_rekt_global
         cv2.rectangle(cv_image, (xA, yA), (xB,yB), (0, 0, 255), 2)
-     
+
     # print ('DEPTH:', cv_image.shape)
     with global_lock:
         cv2.imshow('depthimg', cv_image)
@@ -163,12 +165,12 @@ def rgb_color(img):
 def decide_on_thief_status():
     global history_rgb, max_history, latest_rekt_global
     counter = 0
-    close_threshold = 1500
+    close_threshold = 4000
     while True:
         if(len(history_rgb) >= max_history):
             img = history_rgb[len(history_rgb) - 1]
             data = None
- 
+
             # Apply the method
             data, angle, lost, largest_rekt = detect_people(img)
 
@@ -180,6 +182,7 @@ def decide_on_thief_status():
                 cv2.rectangle(img, (where_do_i_think-1, 0), (where_do_i_think + 1,300), (255, 0, 0), 2)
             else:
                 distance = 0
+                update_distro_with_uniform()
             # Make frame
             if lost:
                 counter += 1
@@ -195,21 +198,55 @@ def decide_on_thief_status():
 
             distance = distance - 1 #don't go inside of the person please
             # print ('ACTUAL:', img.shape)
-
-            waypoint_pub.publish(json.dumps({'angle':angle,'distance':distance}))
+            distance = 1
+            if(angle_to_prob(angle) > 0.02):
+                waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data':{'angle':angle,'distance':distance}}))
 
             with global_lock:
                 cv2.imshow('actualimage', img)
                 cv2.waitKey(1)
 
 
+def angle_to_prob(angle):
+    fov = 90.0
+    global distro_size, distro
+    #print msg.twist.twist.linear.x
+
+    notch = distro_size / 90.0
+
+    if(angle == 0):
+        return max_in_range(int(distro_size/2), 20, distro, distro_size)
+    if(angle > 0):
+        return max_in_range(int(distro_size/2 + angle*notch), 20, distro, distro_size)
+    if(angle < 0):
+        return max_in_range(int(distro_size/2 - angle*notch), 20, distro, distro_size)
+
+
+def max_in_range(mean, i, distro, distro_size):
+    min_mean = mean - i
+    max_mean = mean + i
+    if min_mean < 0:
+        min_mean = 0
+    if max_mean > (distro_size - 1):
+        max_mean = distro_size - 1
+
+    max_value = -1
+
+    for j in range(min_mean, max_mean):
+        if(max_value < distro[j]):
+            max_value = distro[j]
+
+    print 'max', max_value, 'index', i, 'mean', mean
+    return max_value
+
 def init_distro():
-    print ("INit distr")
-    global distro, distro_size
-    distro = [1.0/distro_size for i in range(0,400)]
-    #distro = [0.0001 for i in range(0,400)]
-    #distro[0] = 0.99999
-    print distro
+    with distro_lock:
+        print ("INit distr")
+        global distro, distro_size
+        distro = [1.0/distro_size for i in range(0,400)]
+        #distro = [0.0001 for i in range(0,400)]
+        #distro[0] = 0.99999
+        print distro
 
 def normpdf(x, mean, sd):
     var = float(sd)**2
@@ -218,34 +255,60 @@ def normpdf(x, mean, sd):
     num = math.exp(-(float(x)-float(mean))**2/(2*var))
     return num/denom
 
+def update_distro_with_uniform():
+    with distro_lock
+        global distro, distro_size
+        minimum_value = 0.0000001
+        importance = 1000
+
+        other_distro = [1.0/distro_size for i in range(0,400)]
+
+        for i in range(0, 400):
+            distro[i] = importance * distro[i] + other_distro[i]
+            if (distro[i] < minimum_value):
+                distro[i] = minimum_value
+
+        distro = [float(i)/sum(distro) for i in distro]
+        #print distro
+
+        range_array = range(0,400)
+        plt.clf()
+        plt.cla()
+        plt.plot( range_array, distro, 'b', range_array, other_distro, 'r') # including h here is crucial
+
+        plt.pause(0.0001)
+        return distro.index(max(distro))
+
+
 def update_distro(mean, std_dev):
-    global distro, distro_size
-    minimum_value = 0.0000001
-    importance = 10
+    with distro_lock:
+        global distro, distro_size
+        minimum_value = 0.0000001
+        importance = 10
 
-    other_distro = [normpdf(i, mean, std_dev) for i in range(0, distro_size)]
+        other_distro = [normpdf(i, mean, std_dev) for i in range(0, distro_size)]
 
-    for i in range(0, 400):
-        if (other_distro [i] < minimum_value):
-            other_distro [i] = minimum_value
+        for i in range(0, 400):
+            if (other_distro [i] < minimum_value):
+                other_distro [i] = minimum_value
 
-    other_distro = [float(i)/sum(other_distro) for i in other_distro]
+        other_distro = [float(i)/sum(other_distro) for i in other_distro]
 
-    for i in range(0, 400):
-        distro[i] = importance * distro[i] + other_distro[i]
-        if (distro[i] < minimum_value):
-            distro[i] = minimum_value
+        for i in range(0, 400):
+            distro[i] = importance * distro[i] + other_distro[i]
+            if (distro[i] < minimum_value):
+                distro[i] = minimum_value
 
-    distro = [float(i)/sum(distro) for i in distro]
-    #print distro
+        distro = [float(i)/sum(distro) for i in distro]
+        #print distro
 
-    range_array = range(0,400)
-    plt.clf()
-    plt.cla()
-    plt.plot( range_array, distro, 'b', range_array, other_distro, 'r') # including h here is crucial
+        range_array = range(0,400)
+        plt.clf()
+        plt.cla()
+        plt.plot( range_array, distro, 'b', range_array, other_distro, 'r') # including h here is crucial
 
-    plt.pause(0.0001)
-    return distro.index(max(distro))
+        plt.pause(0.0001)
+        return distro.index(max(distro))
 
 def callback(state_msg):
     """
@@ -273,6 +336,32 @@ def callback(state_msg):
         result_of_chase = None
 
 
+def read_odom(msg):
+    with distro_lock:
+        fov = 90.0
+        minimum_value = 0.0000001
+        global distro, distro_size
+        #print msg.twist.twist.linear.x
+        degree_change = math.degrees(msg.twist.twist.angular.z)
+        notch = distro_size / fov / 4
+        overall_change = abs(degree_change) * notch
+
+        if(degree_change > 0):
+            for i in range(0, distro_size):
+                if i < distro_size - overall_change:
+                   distro[i] = distro[int(i + overall_change)]
+                else:
+                   distro[i] = minimum_value
+            distro = [float(i)/sum(distro) for i in distro]
+        if(degree_change < 0):
+            for i in reversed(range(0, distro_size)):
+                if i > overall_change:
+                   distro[i] = distro[int(i - overall_change)]
+                else:
+                   distro[i] = minimum_value
+            distro = [float(i)/sum(distro) for i in distro]
+
+
 # ROS node stuff
 rospy.init_node('follow_node')
 #rospy.Subscriber('/state', String, callback, queue_size=10)
@@ -280,5 +369,6 @@ pub = rospy.Publisher('/action', String, queue_size=10)
 waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=1)
 rospy.Subscriber('/camera/depth/image_raw', Image, save_distance)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
+rospy.Subscriber('/odom', Odometry, read_odom, queue_size=1)
 callback(String(json.dumps({'id': states.ALARM, 'data': ''})))
 #rospy.spin()
