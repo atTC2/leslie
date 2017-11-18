@@ -5,6 +5,7 @@ import cv2
 import os
 import subprocess
 import rospy
+import numpy as np
 from threading import Thread
 from Queue import Queue
 from datetime import datetime
@@ -35,6 +36,8 @@ running = False
 state_id = None
 state_data = None
 
+thief_went_right = True
+
 
 def detect_change(original_image):
     """
@@ -64,6 +67,8 @@ def detect_change(original_image):
 
     contours = calculate_contours(grey, previous_frames.get())
 
+    decide_which_way(contours, original_image)
+
     # Has there been a change?
     changed = False
     for contour in contours:
@@ -89,6 +94,22 @@ def detect_change(original_image):
         save_frame(original_image)
 
     return changed
+
+
+def decide_which_way(contours, img):
+    global thief_went_right
+    if(len(contours) > 0):
+        vertical, the_width = img.shape[:2]
+        all_x = 0
+        for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            all_x += x
+
+        average_width = all_x / len(contours)
+        if average_width < the_width/2:
+            thief_went_right = False
+        else:
+            thief_went_right = True
 
 
 def detect_significant_change(original_image):
@@ -175,18 +196,22 @@ def run():
     global state_id
     global state_data
 
-    cap = cv2.VideoCapture(config_access.get_config(config_access.KEY_CAMERA_INDEX_TABLE))
+    cap = cv2.VideoCapture(1)
 
     running = True
     while running:
         # Get the current frame
         ret, frame = cap.read()
 
+        cv2.imshow('Table View', frame)
+        cv2.waitKey(1)
+
         # Apply the method
         changed = detect_significant_change(frame)
 
         if changed and state_id == states.LOCKED_AND_WAITING:
             # publish alarm
+            state_data['which_way'] = thief_went_right
             pub.publish(json.dumps({'id': actions.MOVEMENT_DETECTED, 'data': state_data}))
 
         cv2.imshow('Table View', frame)
@@ -205,12 +230,13 @@ def callback(state_msg):
     global running
     global state_id
     global state_data
-
     state_json = json.loads(state_msg.data)
     state_id = state_json['id']
     state_data = state_json['data']
 
+    print state_json
     if state_id == states.LOCKING:
+        print 'Locking'
         # Start finding table in a new thread...
         Thread(target=run).start()
     elif state_id == states.LOCKED_AND_WAITING or state_id == states.ALARM:
