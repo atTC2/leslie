@@ -26,6 +26,7 @@ if __name__ != '__main__':
 FRAME_QUEUE_SIZE = config_access.get_config(config_access.KEY_CHANGE_FRAME_QUEUE_SIZE)
 previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
 change_history = Queue(maxsize=FRAME_QUEUE_SIZE)
+previous_contours = []
 
 # Change detection parameters
 MIN_CONTOUR_AREA = config_access.get_config(config_access.KEY_CHANGE_MIN_CONTOUR_AREA)
@@ -48,10 +49,13 @@ def detect_change(original_image):
     :return: True is change was detected, False if not
     :rtype: bool
     """
+
+
     global previous_frames
     global state_data
     global pub
     global MIN_CONTOUR_AREA
+    global previous_contours
 
     image = crop_to_table(original_image)
 
@@ -67,15 +71,16 @@ def detect_change(original_image):
 
     contours = calculate_contours(grey, previous_frames.get())
 
-    decide_which_way(contours, original_image)
-
+    # decide_which_way(contours, original_image)
     # Has there been a change?
     changed = False
+    saved_countour_list = []
     for contour in contours:
         # If the contour is too small, ignore it
         if cv2.contourArea(contour) < MIN_CONTOUR_AREA:
             continue
         else:
+            saved_countour_list.append(contour)
             changed = True
             break
 
@@ -93,8 +98,29 @@ def detect_change(original_image):
     if changed:
         save_frame(original_image)
 
+    previous_contours.append(saved_countour_list)
+    if(len(previous_contours) > FRAME_QUEUE_SIZE):
+        previous_contours = previous_contours[1:]
+
     return changed
 
+
+def detect_color(image, contours):
+    avg_b = 0
+    avg_g = 0
+    avg_r = 0
+    total = 0
+    for contour in contours:
+        if(len(contour) > 0):
+            x, y, w, h = cv2.boundingRect(contour)
+            for i in range(x, x+w-1):
+                for j in range(y, y+h-1):
+                    avg_b += image[j][i][0]
+                    avg_g += image[j][i][1]
+                    avg_r += image[j][i][2]
+                    total += 1
+        return (avg_b/total, avg_g/total, avg_r/total)
+    return None
 
 def decide_which_way(contours, img):
     global thief_went_right
@@ -121,6 +147,7 @@ def detect_significant_change(original_image):
     :rtype: bool
     """
     global change_history
+    global previous_contours
     global CHANGE_SIGNIFICANT_CHANGE_THRESHOLD
 
     # Find out if there is 'change' in the current frame
@@ -129,7 +156,7 @@ def detect_significant_change(original_image):
     change_history.put(changed)
     # We need to have at least the queue full before we do the rest of this
     if not change_history.full():
-        return False
+        return False, None
     # Remove the oldest change history
     change_history.get()
     # Decide if we need to return a significant change
@@ -140,8 +167,25 @@ def detect_significant_change(original_image):
             change_history_detected_count += 1
         change_history.put(change_history_change)
 
+    alarm = change_history_detected_count > (FRAME_QUEUE_SIZE * CHANGE_SIGNIFICANT_CHANGE_THRESHOLD)
+
+    decided_colour = None
+    if alarm == True:
+        avg_b = 0
+        avg_g = 0
+        avg_r = 0
+        total = 0
+        for countours in previous_contours:
+            if(len(countours) > 0):
+                (b,g,r) = detect_color(original_image, countours)
+                avg_b += b
+                avg_g += g
+                avg_r += r
+                total += 1
+        decided_colour = (avg_b/total, avg_g/total, avg_r/total)
+
     # If over half of the recent change detection is 'change detected', then we should return a significant change
-    return change_history_detected_count > (FRAME_QUEUE_SIZE * CHANGE_SIGNIFICANT_CHANGE_THRESHOLD)
+    return alarm, decided_colour
 
 
 def reset(cap):
@@ -162,6 +206,7 @@ def reset(cap):
     change_util.crop_right = None
     previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
     change_history = Queue(maxsize=FRAME_QUEUE_SIZE)
+    previous_contours = Queue(maxsize=FRAME_QUEUE_SIZE)
 
     if change_util.video_writer is not None:
         change_util.video_writer.release()
@@ -203,15 +248,14 @@ def run():
         # Get the current frame
         ret, frame = cap.read()
 
-        cv2.imshow('Table View', frame)
-        cv2.waitKey(1)
-
         # Apply the method
-        changed = detect_significant_change(frame)
+        changed, decided_colour = detect_significant_change(frame)
 
+        print changed, decided_colour
         if changed and state_id == states.LOCKED_AND_WAITING:
             # publish alarm
             state_data['which_way'] = thief_went_right
+            state_data['colour'] = decided_colour
             pub.publish(json.dumps({'id': actions.MOVEMENT_DETECTED, 'data': state_data}))
 
         cv2.imshow('Table View', frame)
