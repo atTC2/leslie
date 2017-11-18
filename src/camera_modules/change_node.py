@@ -130,7 +130,6 @@ def reset(cap):
     :type cap: VideoCapture
     """
     global previous_frames
-    global state_id
     global change_history
 
     # Release capture and destroy windows
@@ -153,17 +152,30 @@ def reset(cap):
             ['HandBrakeCLI', '-i', change_util.video_file, '-o', change_util.video_file.replace('.avi', '.mp4'), '-e',
              'x265', '-q', '20'], stdout=dev_null, stderr=subprocess.STDOUT)
 
+        # Check for if compression worked
         if compress_result == 0:
-            # Remove old file
+            # Remove old file (tidy up)
             os.remove(change_util.video_file)
-
             # We know the video is compressed, and not being written to, so we can send it here
-            email_report.ask_send_report_email(state_data['notify_owner'], change_util.video_file.replace('.avi', '.mp4'))
+            report(change_util.video_file.replace('.avi', '.mp4'))
         else:
             # Compression failed, try with the other video anyway
-            email_report.ask_send_report_email(state_data['notify_owner'], change_util.video_file)
+            report(change_util.video_file)
 
         change_util.video_file = None
+
+
+def report(video_path):
+    """
+    Call the report method, given the state id currently report
+    :param video_path: The path to the video file of action seen
+    :type video_path: str
+    """
+    global state_id
+    global state_data
+
+    if state_id == states.ALARM_REPORT:
+        email_report.ask_send_report_email(state_data['notify_owner'], video_path)
 
 
 def run():
