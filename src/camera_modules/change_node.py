@@ -14,6 +14,7 @@ from state_machine import states, actions
 from camera_modules import change_util
 from camera_modules.change_util import crop_to_table, convert_to_grey, calculate_contours, save_frame, draw_changes
 from util_modules import config_access
+from util_modules import utils_detect
 from interaction_modules.reporting_modules import email_report
 
 if __name__ != '__main__':
@@ -105,23 +106,6 @@ def detect_change(original_image):
     return changed
 
 
-def detect_color(image, contours):
-    avg_b = 0
-    avg_g = 0
-    avg_r = 0
-    total = 0
-    for contour in contours:
-        if(len(contour) > 0):
-            x, y, w, h = cv2.boundingRect(contour)
-            for i in range(x, x+w-1):
-                for j in range(y, y+h-1):
-                    avg_b += image[j][i][0]
-                    avg_g += image[j][i][1]
-                    avg_r += image[j][i][2]
-                    total += 1
-        return (avg_b/total, avg_g/total, avg_r/total)
-    return None
-
 def decide_which_way(contours, img):
     global thief_went_right
     if(len(contours) > 0):
@@ -177,7 +161,7 @@ def detect_significant_change(original_image):
         total = 0
         for countours in previous_contours:
             if(len(countours) > 0):
-                (b,g,r) = detect_color(original_image, countours)
+                (b,g,r) = utils_detect.detect_avg_color(original_image, countours)
                 avg_b += b
                 avg_g += g
                 avg_r += r
@@ -197,6 +181,7 @@ def reset(cap):
     global previous_frames
     global state_id
     global change_history
+    global previous_contours
 
     # Release capture and destroy windows
     cap.release()

@@ -22,6 +22,7 @@ from std_msgs.msg import String
 from nav_msgs.msg import Odometry
 from state_machine import states, actions
 from cv_bridge import CvBridge, CvBridgeError
+from util_modules import utils_detect
 
 history = []
 history_rgb = []
@@ -31,6 +32,8 @@ global_lock = Lock()
 distro_lock = Lock()
 distro = []
 distro_size = 400
+
+locked_colour = None
 
 def detect_angle_to_person(image,rectangle):
 
@@ -48,7 +51,7 @@ def detect_angle_to_person(image,rectangle):
 
 def detect_people(image):
 
-    global latest_rekt_global
+    global latest_rekt_global, locked_colour
 
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
@@ -78,23 +81,26 @@ def detect_people(image):
         rects = numpy.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
-        maxX = 0
-        check = 0
+        closest_colour = None
+        closest_colour_diff = 99999999 # some max number
 
-    # draw the final bounding boxes
+        # draw the final bounding boxes
         for (xA, yA, xB, yB) in pick:
             #print (xA, yA, xB, yB)
             cv2.rectangle(orig, (xA, yA), (xB, yB), (0, 255, 0), 2)
-            check = abs(xA-xB)
-            if check > maxX:
-                maxX = check
-                largest_rekt = ((xA, yA), (xB, yB))
-                latest_rekt_global = largest_rekt
+            avg_rect_colour = utils_detect.detect_avg_color2(orig, (xA, yA), (xB, yB))
+            colour_diff = utils_detect.euclidian_colour_diff(avg_rect_colour, locked_colour)
+
+            if colour_diff < closest_colour_diff:
+                closest_colour_diff = euclidian_colour_diff
+                closest_rekt = ((xA, yA), (xB, yB))
+                latest_rekt_global = closest_rekt
                 angle = detect_angle_to_person(orig, ((xA, yA), (xB, yB)))
+
         #print "angle: ", angle
         lost = False
 
-    return orig, angle, lost, largest_rekt
+    return orig, angle, lost, closest_rekt
 
 def get_distance(((xA,yA),(xB,yB))):
     global history
@@ -163,7 +169,7 @@ def rgb_color(img):
 
 
 def decide_on_thief_status():
-    global history_rgb, max_history, latest_rekt_global
+    global history_rgb, max_history, latest_rekt_global, locked_colour
     counter = 0
     close_threshold = 4000
     while True:
@@ -316,12 +322,14 @@ def callback(state_msg):
     :param state_msg: The new state information
     :type state_msg: std_msgs.msg.String
     """
+    global locked_colour
     #global SLEEP_TIME
     init_distro()
     print "state_msg: ", state_msg
     state = json.loads(state_msg.data)
     action = {}
     if state['id'] == states.ALARM:
+        locked_colour = state['data']['colour']
         result = decide_on_thief_status()
 
         print "result: ", result
