@@ -105,7 +105,7 @@ def state_callback(state_msg):
     state = json.loads(state_msg.data)
     if state['id'] == states.AT_HOME:
         get_face()
-        
+        return
     elif state['id'] == states.LOCKED_AND_WAITING:
         owner = state['data']['current_owner']
         friend = state['data']['friend']
@@ -120,6 +120,9 @@ def state_callback(state_msg):
             }
         }
         pub.publish(json.dumps(action))
+
+    # If the state isn't AT_HOME, we want to make sure that it isn't waiting on some face recognition verification
+    yes_no_listener.callback = None
 
 
 def get_face():
