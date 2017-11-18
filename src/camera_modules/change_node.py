@@ -175,7 +175,7 @@ def report(video_path):
     global state_data
 
     if state_id == states.ALARM_REPORT:
-        email_report.send_report_email(state_data['notify_owner'], video_path)
+        email_report.ask_send_report_email(state_data['notify_owner'], video_path)
 
 
 def run():
