@@ -14,5 +14,9 @@
     "email_address": "leslietherobot.aka.pips@gmail.com",
     "email_password": "totallynottheactualthief",
     "email_server": "smtp.gmail.com",
-    "email_port": 587
+    "email_port": 587,
+    "starting_state": {
+        "id": "AT_HOME",
+        "data": {}
+    }
 }

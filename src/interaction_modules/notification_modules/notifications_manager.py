@@ -8,7 +8,7 @@ from std_msgs.msg import String
 import beep_module
 import email_module
 import twitter_module
-from state_machine import states
+from state_machine import states, state_util
 from util_modules.people_info import get_user_info
 
 if __name__ != '__main__':
@@ -51,6 +51,8 @@ def state_callback(state_msg):
     manage_notification(owner_name)
     
 
+# ROS node stuff
 rospy.init_node('notifications_manager')
-rospy.Subscriber('/state', String, state_callback, queue_size=1)
+rospy.Subscriber('/state', String, state_callback, queue_size=10)
+state_util.prime_state_callback_with_starting_state(state_callback)
 rospy.spin()

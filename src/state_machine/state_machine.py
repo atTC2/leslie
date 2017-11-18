@@ -4,6 +4,7 @@ import rospy
 from std_msgs.msg import String
 import sys
 import json
+from util_modules import config_access
 from states import *
 from actions import *
 
@@ -31,8 +32,8 @@ state_machine = {
     (MOVE_TO_HOME,         ARRIVED):           AT_HOME
 }
 
-# Always start on AT_HOME
-current_state_id = AT_HOME
+# Get the starting state from the config.
+current_state_id = config_access.get_config(config_access.KEY_STARTING_STATE)['id']
 
 
 def publish_state(data):

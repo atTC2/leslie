@@ -13,7 +13,7 @@ from std_msgs.msg import String
 # from std_srvs.srv import Empty
 
 from interaction_modules.yes_no_listener import YesNoListener
-from state_machine import states, actions
+from state_machine import states, actions, state_util
 from util_modules import speech_engine
 
 if __name__ != '__main__':
@@ -161,13 +161,10 @@ def goal_callback(goal):
     print str(goal)
 
 
+# ROS node stuff
 rospy.init_node('navstack_supervisor')
 state_pub = rospy.Publisher('/action', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
+state_util.prime_state_callback_with_starting_state(state_callback)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
-
-# TESTING
-# state_data = {'id': states.MOVE_TO_TABLE, 'data': {'tableID': 1}}
-# state_callback(String(json.dumps(state_data)))
-
 rospy.spin()

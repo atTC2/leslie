@@ -25,6 +25,7 @@ KEY_EMAIL_ADDRESS = 'email_address'
 KEY_EMAIL_PASSWORD = 'email_password'
 KEY_EMAIL_SERVER = 'email_server'
 KEY_EMAIL_PORT = 'email_port'
+KEY_STARTING_STATE = 'starting_state'
 
 
 def get_config(key):

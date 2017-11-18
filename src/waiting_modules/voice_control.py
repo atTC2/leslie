@@ -3,7 +3,7 @@
 import rospy
 import json
 from std_msgs.msg import String
-from state_machine import actions, states
+from state_machine import actions, states, state_util
 from get_table import GetTable
 from get_friend import GetFriend
 
@@ -85,9 +85,10 @@ def state_callback(state_msg):
 get_friend.callback = got_friend
 get_table.callback = got_table
 
-# Setup ROS node
+# ROS node stuff
 rospy.init_node('voice_control')
-rospy.Subscriber('/state', String, state_callback, queue_size=10)
-rospy.loginfo("voice_control - ready to receive voice commands")
 pub = rospy.Publisher('/action', String, queue_size=10)
+rospy.Subscriber('/state', String, state_callback, queue_size=10)
+state_util.prime_state_callback_with_starting_state(state_callback)
+rospy.loginfo("voice_control - ready to receive voice commands")
 rospy.spin()
