@@ -70,6 +70,7 @@ def state_callback(state_msg):
     :param state_msg: The current state of the robot's State Machine and data about table if applicable
     :type state_msg: std_msgs.msg.String
     """
+    print "CALLED STATE CALLBACK"
     global home_pose, client
     state_json = json.loads(state_msg.data)
     goal = MoveBaseGoal()
@@ -100,6 +101,8 @@ def state_callback(state_msg):
         print 'fail to reach goal'
         # TODO: Return home
 
+    follow_callback(state_msg)
+
 
 def goal_callback(goal):
     """
@@ -125,7 +128,7 @@ def follow_callback(data):
     print 'calc goal'
     goal_pose = utils_maths.new_point(current_pose, angle, dist)
     print 'got goal'
-    
+
     if goal_handler != None:
         goal_handler.cancel()
     goal_handler = client.send_goal(goal_pose)
@@ -139,6 +142,7 @@ def current_pose_callback(data):
 rospy.init_node('navstack_supervisor')
 state_pub = rospy.Publisher('/action', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
+rospy.Subscriber('/waypoint', String, follow_callback, queue_size=10)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
 rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, current_pose_callback, queue_size=10)
 

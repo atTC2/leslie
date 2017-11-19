@@ -31,6 +31,11 @@ def detect_avg_color2(image, tl_point, br_point):
     avg_r = 0
     total = 0
 
+    if br_point[0] > 400:
+        br_point[0] = 400
+    if br_point[1] > 300:
+        br_point[1] = 300
+
     x = tl_point[0]
     y = tl_point[1]
     w = br_point[0] - tl_point[0]

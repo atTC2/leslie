@@ -77,11 +77,11 @@ def detect_people(image):
     # apply non-maxima suppression to the bounding boxes using a
     # fairly large overlap threshold to try to maintain overlapping
     # boxes that are still people
+    closest_rekt = None
     if len(rects) !=0:
         rects = numpy.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
-        closest_colour = None
         closest_colour_diff = 99999999 # some max number
 
         # draw the final bounding boxes
@@ -92,7 +92,7 @@ def detect_people(image):
             colour_diff = utils_detect.euclidian_colour_diff(avg_rect_colour, locked_colour)
 
             if colour_diff < closest_colour_diff:
-                closest_colour_diff = euclidian_colour_diff
+                closest_colour_diff = colour_diff
                 closest_rekt = ((xA, yA), (xB, yB))
                 latest_rekt_global = closest_rekt
                 angle = detect_angle_to_person(orig, ((xA, yA), (xB, yB)))
@@ -242,17 +242,15 @@ def max_in_range(mean, i, distro, distro_size):
         if(max_value < distro[j]):
             max_value = distro[j]
 
-    print 'max', max_value, 'index', i, 'mean', mean
+    #print 'max', max_value, 'index', i, 'mean', mean
     return max_value
 
 def init_distro():
     with distro_lock:
-        print ("INit distr")
         global distro, distro_size
         distro = [1.0/distro_size for i in range(0,400)]
         #distro = [0.0001 for i in range(0,400)]
         #distro[0] = 0.99999
-        print distro
 
 def normpdf(x, mean, sd):
     var = float(sd)**2
@@ -262,7 +260,7 @@ def normpdf(x, mean, sd):
     return num/denom
 
 def update_distro_with_uniform():
-    with distro_lock
+    with distro_lock:
         global distro, distro_size
         minimum_value = 0.0000001
         importance = 1000
@@ -326,9 +324,16 @@ def callback(state_msg):
     #global SLEEP_TIME
     init_distro()
     print "state_msg: ", state_msg
+    print 'lookinf for thief?'
     state = json.loads(state_msg.data)
     action = {}
     if state['id'] == states.ALARM:
+        print 'LOOKING FOR THIEF'
+        which_way = state['data']['which_way']
+        if which_way or which_way == 'True':
+            waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data':{'angle':90,'distance':0}}))
+        if not which_way or which_way == 'False':
+            waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data':{'angle':-90,'distance':0}}))
         locked_colour = state['data']['colour']
         result = decide_on_thief_status()
 
@@ -372,11 +377,11 @@ def read_odom(msg):
 
 # ROS node stuff
 rospy.init_node('follow_node')
-#rospy.Subscriber('/state', String, callback, queue_size=10)
-pub = rospy.Publisher('/action', String, queue_size=10)
+rospy.Subscriber('/state', String, callback, queue_size=1)
+pub = rospy.Publisher('/action', String, queue_size=1)
 waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=1)
 rospy.Subscriber('/camera/depth/image_raw', Image, save_distance)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
 rospy.Subscriber('/odom', Odometry, read_odom, queue_size=1)
-callback(String(json.dumps({'id': states.ALARM, 'data': ''})))
-#rospy.spin()
+#callback(String(json.dumps({'id': states.ALARM, 'data': ''})))
+rospy.spin()

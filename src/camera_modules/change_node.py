@@ -110,16 +110,20 @@ def decide_which_way(contours, img):
     global thief_went_right
     if(len(contours) > 0):
         vertical, the_width = img.shape[:2]
-        all_x = 0
+        all_left = 0
+        all_right = 0
         for contour in contours:
             x, y, w, h = cv2.boundingRect(contour)
-            all_x += x
+            area = w * h
+            if x + w <= the_width/2:
+                all_left += area
+            if x < the_width/2 and x+w > the_width/2:
+                all_left += area/(the_width/2 - x)
+                all_right += area/(x + w - the_width/2)
+            if x + w >= the_width/2
+                all_right += area
 
-        average_width = all_x / len(contours)
-        if average_width < the_width/2:
-            thief_went_right = False
-        else:
-            thief_went_right = True
+        thief_went_right = all_right > all_left
 
 
 def detect_significant_change(original_image):
@@ -166,7 +170,7 @@ def detect_significant_change(original_image):
                 avg_g += g
                 avg_r += r
                 total += 1
-        decided_colour = (avg_b/total, avg_g/total, avg_r/total)
+        decided_colour = [avg_b/total, avg_g/total, avg_r/total]
 
     # If over half of the recent change detection is 'change detected', then we should return a significant change
     return alarm, decided_colour
@@ -226,7 +230,7 @@ def run():
     global state_id
     global state_data
 
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(2)
 
     running = True
     while running:
@@ -236,12 +240,13 @@ def run():
         # Apply the method
         changed, decided_colour = detect_significant_change(frame)
 
-        print changed, decided_colour
+        #print changed, decided_colour
         if changed and state_id == states.LOCKED_AND_WAITING:
             # publish alarm
             state_data['which_way'] = thief_went_right
             state_data['colour'] = decided_colour
             pub.publish(json.dumps({'id': actions.MOVEMENT_DETECTED, 'data': state_data}))
+            running = False
 
         cv2.imshow('Table View', frame)
         cv2.waitKey(1)
