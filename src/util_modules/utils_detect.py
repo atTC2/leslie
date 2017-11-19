@@ -1,4 +1,6 @@
 import cv2
+import math
+
 
 def detect_avg_color(image, contours):
     '''
@@ -18,8 +20,9 @@ def detect_avg_color(image, contours):
                     avg_b += image[j][i][0]
                     avg_g += image[j][i][1]
                     avg_r += image[j][i][2]
+        
         return (avg_b/total, avg_g/total, avg_r/total)
-    return None    
+    return None
 
 def detect_avg_color2(image, tl_point, br_point):
     '''
@@ -47,6 +50,8 @@ def detect_avg_color2(image, tl_point, br_point):
             avg_g += image[j][i][1]
             avg_r += image[j][i][2]
     #assert total != 0?
+
+    print ('Detected', avg_b/total, avg_g/total, avg_r/total)
     return (avg_b/total, avg_g/total, avg_r/total)
 
 def euclidian_colour_diff(colour1, colour2):
@@ -54,4 +59,8 @@ def euclidian_colour_diff(colour1, colour2):
     bdiff = colour2[1] - colour1[1]
     rdiff = colour2[2] - colour1[2]
 
-    return (gdiff + bdiff + rdiff)/3
+    gdiff = gdiff * gdiff
+    bdiff = bdiff * bdiff
+    rdiff = rdiff * rdiff
+
+    return math.sqrt(gdiff + bdiff + rdiff)

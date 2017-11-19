@@ -30,7 +30,7 @@ state_machine = {
 }
 
 # Always start on WAIT FOR INSTRUCTION
-current_state_id = WAIT_FOR_INSTRUCTION
+current_state_id = LOCKED_AND_WAITING
 
 
 def publish_state(data):
@@ -40,11 +40,11 @@ def publish_state(data):
     :type data: dict(str, T)
     """
     global current_state_id
-    
+
     state = {}
     state['id'] = current_state_id
     state['data'] = data
-    
+
     print 'State:', state
     pub.publish(json.dumps(state))
 
@@ -56,11 +56,11 @@ def action_callback(action_msg):
     :type action_msg: std_msgs.msg.String
     """
     global current_state_id
-    
+
     action_taken = json.loads(action_msg.data)
     action_id = action_taken['id']
     action_data = action_taken['data']
-    
+
     try:
         current_state_id = state_machine[(current_state_id, action_id)]
         publish_state(action_data)

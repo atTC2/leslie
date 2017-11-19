@@ -72,7 +72,7 @@ def detect_change(original_image):
 
     contours = calculate_contours(grey, previous_frames.get())
 
-    # decide_which_way(contours, original_image)
+    decide_which_way(contours, original_image)
     # Has there been a change?
     changed = False
     saved_countour_list = []
@@ -115,12 +115,12 @@ def decide_which_way(contours, img):
         for contour in contours:
             x, y, w, h = cv2.boundingRect(contour)
             area = w * h
-            if x + w <= the_width/2:
+            if x + w <= (the_width/2):
                 all_left += area
-            if x < the_width/2 and x+w > the_width/2:
+            if x < (the_width/2) and x+w > (the_width/2):
                 all_left += area/(the_width/2 - x)
                 all_right += area/(x + w - the_width/2)
-            if x + w >= the_width/2
+            if x + w >= (the_width/2):
                 all_right += area
 
         thief_went_right = all_right > all_left

@@ -101,8 +101,6 @@ def state_callback(state_msg):
         print 'fail to reach goal'
         # TODO: Return home
 
-    follow_callback(state_msg)
-
 
 def goal_callback(goal):
     """
@@ -143,7 +141,7 @@ rospy.init_node('navstack_supervisor')
 state_pub = rospy.Publisher('/action', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
 rospy.Subscriber('/waypoint', String, follow_callback, queue_size=10)
-rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
+rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=10)
 rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, current_pose_callback, queue_size=10)
 
 # TESTING
