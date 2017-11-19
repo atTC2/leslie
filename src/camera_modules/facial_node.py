@@ -9,6 +9,7 @@ import json
 from state_machine import states, actions
 import camera_node
 from util_modules import config_access
+from util_modules import speech_engine
 
 
 if __name__ != '__main__':
@@ -24,7 +25,7 @@ FRAME_THRESHOLD = config_access.get_config(config_access.KEY_FACE_FRAME_THRESHOL
 SLEEP_TIME = config_access.get_config(config_access.KEY_MIN_LOCKED_TIME_SECONDS)
 
 frame_count = 0
-
+global current_state_id
 
 def identify(image):
     """
@@ -96,9 +97,13 @@ def state_callback(state_msg):
     :type state_msg: std_msgs.msg.String
     """
     global SLEEP_TIME
+    recog_timeout = 1000
+    counter = 0
+
 
     print "state_msg: ", state_msg
     state = json.loads(state_msg.data)
+    current_state_id = state['id']
     action = {}
     action['data'] = {}
     if state['id'] == states.AT_TABLE:
@@ -107,16 +112,47 @@ def state_callback(state_msg):
         print "result: ", result
         action['id'] = actions.GOT_FACE
         action['data']['current_owner'] = result[0]
-        
+
     elif state['id'] == states.LOCKED_AND_WAITING:
         owner = state['data']['current_owner']
+        exit = False
         rospy.sleep(SLEEP_TIME)
         result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
-        while owner not in result:
+        while (owner not in result) and (counter < recog_timeout):
             result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
-        action['id'] = actions.FACE_RECOGNISED
-        action['data']['notify_owner'] = owner
-        action['data']['current_owner'] = ""
+            #Check to see if we have become lost while chasing thief.
+            if current_state_id == states.LOST:
+                exit = True
+            #Check to see if we have caught the thief and are waiting for recog timeout.
+            elif current_state_id == states.CAUGHT:
+                counter += 1
+
+        if (counter < recog_timeout) and not exit:
+            action['id'] = actions.FACE_RECOGNISED
+            action['data']['notify_owner'] = owner
+            action['data']['current_owner'] = ""
+        elif not exit:
+            action['id'] = actions.RECOG_TIMEOUT
+            action['data']['notify_owner'] = owner
+            action['data']['current_owner'] = ""
+    '''
+    elif state['id'] == states.CAUGHT:
+        owner = state['data']['current_owner']
+        speech_engine.say("Please present your face to the laptop camera for identification.")
+        rospy.sleep(SLEEP_TIME)
+        result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
+        while (owner not in result) and (counter < recog_timeout):
+            result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
+            counter += 1
+        if counter < recog_timeout:
+            action['id'] = actions.FACE_RECOGNISED
+            action['data']['notify_owner'] = owner
+            action['data']['current_owner'] = ""
+        else:
+            action['id'] = actions.RECOG_TIMEOUT
+            action['data']['notify_owner'] = owner
+            action['data']['current_owner'] = ""
+    '''
     if action['data'] != {}:
         pub.publish(json.dumps(action))
 
