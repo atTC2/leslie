@@ -16,6 +16,7 @@ if __name__ != '__main__':
 
 
 # Mapping of state + action = state
+'''
 state_machine = {
     # State                Action           -> State
     (WAIT_FOR_INSTRUCTION, CALLED_OVER):       MOVE_TO_TABLE,
@@ -27,6 +28,26 @@ state_machine = {
     (ALARM_REPORT,         ALARM_HANDLED):     MOVE_TO_HOME,
     (LOCKED_AND_WAITING,   FACE_RECOGNISED):   MOVE_TO_HOME,
     (MOVE_TO_HOME,         ARRIVED):           WAIT_FOR_INSTRUCTION
+}
+'''
+
+state_machine = {
+    # State                Action           -> State
+    (WAIT_FOR_INSTRUCTION, CALLED_OVER):       MOVE_TO_TABLE,
+    (MOVE_TO_TABLE,        ARRIVED):           AT_TABLE,
+    (AT_TABLE,             GOT_FACE):          LOCKING,
+    (LOCKING,              READY_TO_LOCK):     LOCKED_AND_WAITING,
+    (LOCKED_AND_WAITING,   MOVEMENT_DETECTED): ALARM,
+    (ALARM,                CAUGHT_THIEF):      CAUGHT,
+    (ALARM,                FACE_RECOGNISED):   ACCIDENT,
+    (CAUGHT,               FACE_RECOGNISED):   ACCIDENT,
+    (CAUGHT,               RECOG_TIMEOUT):     THIEF,
+    (ACCIDENT,             ALARM_HANDLED):     MOVE_TO_HOME,
+    (THIEF,                ALARM_HANDLED):     MOVE_TO_HOME,
+    (LOCKED_AND_WAITING,   FACE_RECOGNISED):   MOVE_TO_HOME,
+    (MOVE_TO_HOME,         ARRIVED):           WAIT_FOR_INSTRUCTION,
+    (ALARM,                LOST_THIEF):        LOST,
+    (LOST,                 ALARM_HANDLED):     MOVE_TO_HOME
 }
 
 # Always start on WAIT FOR INSTRUCTION
