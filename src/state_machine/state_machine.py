@@ -4,7 +4,7 @@ import rospy
 from std_msgs.msg import String
 import sys
 import json
-from util_modules import config_access
+import state_util
 from states import *
 from actions import *
 
@@ -33,7 +33,7 @@ state_machine = {
 }
 
 # Get the starting state from the config.
-current_state_id = config_access.get_config(config_access.KEY_STARTING_STATE)['id']
+current_state_id = state_util.get_start_state()
 
 
 def publish_state(data):

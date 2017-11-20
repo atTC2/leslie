@@ -5,6 +5,15 @@ from std_msgs.msg import String
 from util_modules import config_access
 
 
+def get_start_state():
+    """
+    Gets the initial state
+    :return: The initial state
+    :rtype: str
+    """
+    return config_access.get_config(config_access.KEY_STARTING_STATE)['id']
+
+
 def send_state_obj_to_state_callback(state_callback, state_obj):
     """
     Sends an object (dict) representing a state message to a state callback as a String.

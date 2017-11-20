@@ -1,14 +1,10 @@
 import json
-
+import cv2
 import rospy
 from std_msgs.msg import String
+from state_machine import state_util
 
-import cv2
-
-from state_machine import states
-
-
-state_id = states.AT_HOME
+state_id = state_util.get_start_state()
 
 
 def _state_callback(state_msg):
