@@ -25,7 +25,15 @@ KEY_EMAIL_ADDRESS = 'email_address'
 KEY_EMAIL_PASSWORD = 'email_password'
 KEY_EMAIL_SERVER = 'email_server'
 KEY_EMAIL_PORT = 'email_port'
-
+KEY_THRESHOLD_FRAME = 'threshold_frame'
+KEY_ALARM_COUNT_THRESHOLD = 'alarm_count_threshold'
+KEY_LOCKING_FRAME_COUNT = 'locking_frame_count'
+KEY_MIN_PIXEL_CHANGE_COUNT = 'min_pixel_change_count'
+KEY_OFFSET = 'offset'
+KEY_MIN_HEIGHT_CROPPED = 'min_height_cropped'
+KEY_MAX_HEIGHT_CROPPED = 'max_height_cropped'
+KEY_MIN_WIDTH_CROPPED = 'min_width_cropped'
+KEY_MAX_WIDTH_CROPPED = 'max_height_cropped'
 
 def get_config(key):
     """
