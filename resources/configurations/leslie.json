@@ -17,11 +17,11 @@
     "email_port": 587,
     "threshold_frame": 2,
     "alarm_count_threshold": 2,
-    "locking_frame_count": 20,
+    "locking_frame_count": 100,
     "min_pixel_change_count": 350,
     "offset": 0.1,
     "min_height_cropped": 200,
     "max_height_cropped": 480,
     "min_width_cropped": 100,
-    "max_height_cropped": 620
+    "max_width_cropped": 620
 }
