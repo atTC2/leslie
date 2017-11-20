@@ -38,20 +38,16 @@ state_machine = {
     (AT_TABLE,             GOT_FACE):          LOCKING,
     (LOCKING,              READY_TO_LOCK):     LOCKED_AND_WAITING,
     (LOCKED_AND_WAITING,   MOVEMENT_DETECTED): ALARM,
-    (ALARM,                CAUGHT_THIEF):      CAUGHT,
-    (ALARM,                FACE_RECOGNISED):   ACCIDENT,
-    (CAUGHT,               FACE_RECOGNISED):   ACCIDENT,
-    (CAUGHT,               RECOG_TIMEOUT):     THIEF,
-    (ACCIDENT,             ALARM_HANDLED):     MOVE_TO_HOME,
-    (THIEF,                ALARM_HANDLED):     MOVE_TO_HOME,
-    (LOCKED_AND_WAITING,   FACE_RECOGNISED):   MOVE_TO_HOME,
-    (MOVE_TO_HOME,         ARRIVED):           WAIT_FOR_INSTRUCTION,
     (ALARM,                LOST_THIEF):        LOST,
-    (LOST,                 ALARM_HANDLED):     MOVE_TO_HOME
+    (ALARM,                GOT_FACE):          ACCIDENT,
+    (LOST,                 ALARM_HANDLED):     LOCKING,
+    (ACCIDENT,             ALARM_HANDLED):     MOVE_TO_HOME,
+    (LOCKED_AND_WAITING,   GOT_FACE):   MOVE_TO_HOME,
+    (MOVE_TO_HOME,         ARRIVED):           WAIT_FOR_INSTRUCTION
 }
 
 # Always start on WAIT FOR INSTRUCTION
-current_state_id = LOCKED_AND_WAITING
+current_state_id = WAIT_FOR_INSTRUCTION
 
 
 def publish_state(data):

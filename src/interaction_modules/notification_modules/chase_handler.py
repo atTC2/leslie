@@ -10,13 +10,10 @@ def state_callback(state_msg):
     action = {}
     action['data'] = {}
     if state['id'] == states.ACCIDENT:
+        speech_engine.say("It seems there was a false alarm, please be sure to unlock me with your face before approaching the table in future.")
         action['id'] = actions.ALARM_HANDLED
-    elif state['id'] == states.CAUGHT:
-        speech_engine.say("Please present your face for identification.")
     elif state['id'] == states.LOST:
-        action['id'] = actions.ALARM_HANDLED
-    elif state['id'] == states.THIEF:
-        speech_engine.say("You are not recognised as the owner. Return what you have stolen, thief. I am sending a video of this encounter to the owner.")
+        speech_engine.say("Video recording of incident complete, returning to guard post.")
         action['id'] = actions.ALARM_HANDLED
     pub.publish(json.dumps(action))
 

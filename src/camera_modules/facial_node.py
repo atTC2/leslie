@@ -118,23 +118,18 @@ def state_callback(state_msg):
         exit = False
         rospy.sleep(SLEEP_TIME)
         result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
-        while (owner not in result) and (counter < recog_timeout):
+        while owner not in result:
             result = camera_node.get_data_from_camera(CAMERA_INDEX, detect)
             #Check to see if we have become lost while chasing thief.
             if current_state_id == states.LOST:
                 exit = True
-            #Check to see if we have caught the thief and are waiting for recog timeout.
-            elif current_state_id == states.CAUGHT:
-                counter += 1
+                break
 
-        if (counter < recog_timeout) and not exit:
-            action['id'] = actions.FACE_RECOGNISED
+        if not exit:
+            action['id'] = actions.GOT_FACE
             action['data']['notify_owner'] = owner
             action['data']['current_owner'] = ""
-        elif not exit:
-            action['id'] = actions.RECOG_TIMEOUT
-            action['data']['notify_owner'] = owner
-            action['data']['current_owner'] = ""
+            
     '''
     elif state['id'] == states.CAUGHT:
         owner = state['data']['current_owner']

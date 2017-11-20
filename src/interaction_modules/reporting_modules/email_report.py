@@ -42,14 +42,17 @@ def send_report_email(name, file_path):
     global state_id
     # Check if they have an email address
     user_info = get_user_info(name)
+
+    ''' This would not work, will fix later. TODO
     if 'email_address' not in user_info:
         # No email address
         handled_alarm()
         return
+    '''
 
     # Give the incident reporter a new callback
     #callback = partial(real_send_email, name, user_info['email_address'], file_path)
-    while state_id not in [states.LOST, states.THIEF, states.ACCIDENT]:
+    while state_id not in [states.LOST, states.ACCIDENT]:
         rospy.sleep(2)
     #reporter.prompt_email_confirmation(callback)
     if state_id != states.ACCIDENT:

@@ -38,6 +38,9 @@
         launch-prefix="$(arg sleep) 20" />
   <node name="follow_node" pkg="leslie" type="follow_node.py" output="screen"
         launch-prefix="$(arg sleep) 20" />
+  <node name="chase_handler_node" pkg="leslie" type="chase_handler.py" output="screen"
+        launch-prefix="$(arg sleep) 20" />
+
 
   <!-- Run RQT Graph -->
   <!--
