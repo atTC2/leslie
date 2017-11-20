@@ -159,18 +159,22 @@ def detect_significant_change(original_image):
 
     decided_colour = None
     if alarm == True:
+
         avg_b = 0
         avg_g = 0
         avg_r = 0
         total = 0
         for countours in previous_contours:
-            if(len(countours) > 0):
-                (b,g,r) = utils_detect.detect_avg_color(original_image, countours)
-                avg_b += b
-                avg_g += g
-                avg_r += r
-                total += 1
+            for countour in countours:
+                x, y, w, h = cv2.boundingRect(countour)
+                if(len(countour) > 0):
+                    b,g,r = utils_detect.make_histogram(original_image, x, y, x + w, y + h, False)
+                    avg_b += b
+                    avg_g += g
+                    avg_r += r
+                    total += 1
         decided_colour = [avg_b/total, avg_g/total, avg_r/total]
+        print decided_colour
 
     # If over half of the recent change detection is 'change detected', then we should return a significant change
     return alarm, decided_colour
@@ -183,6 +187,7 @@ def reset(cap):
     :type cap: VideoCapture
     """
     global previous_frames
+
     global state_id
     global change_history
     global previous_contours
@@ -230,7 +235,7 @@ def run():
     global state_id
     global state_data
 
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(0)
 
     running = True
     while running:
@@ -267,7 +272,6 @@ def callback(state_msg):
     state_json = json.loads(state_msg.data)
     state_id = state_json['id']
     state_data = state_json['data']
-
     print state_json
     if state_id == states.LOCKING:
         print 'Locking'
@@ -287,6 +291,6 @@ rospy.Subscriber('/state', String, callback, queue_size=10)
 pub = rospy.Publisher('/action', String, queue_size=10)
 
 # TESTING
-# callback(String(json.dumps({'id': states.LOCKING, 'data': {'current_owner': 'Seb'}})))
+#callback(String(json.dumps({'id': states.LOCKING, 'data': {'current_owner': 'Seb'}})))
 
 rospy.spin()

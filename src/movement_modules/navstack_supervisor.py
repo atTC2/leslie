@@ -117,7 +117,7 @@ def follow_callback(data):
     state_json = json.loads(data.data)
     if state_json['id'] != 'FOLLOW_PERP':
         return
-    print 'Good to go'
+
 
     state_data = state_json['data']
     # sends a goal to get robot to turn 90 left or right

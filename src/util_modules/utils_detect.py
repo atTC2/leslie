@@ -1,6 +1,6 @@
 import cv2
 import math
-
+import matplotlib.pyplot as plt
 
 def detect_avg_color(image, contours):
     '''
@@ -20,7 +20,7 @@ def detect_avg_color(image, contours):
                     avg_b += image[j][i][0]
                     avg_g += image[j][i][1]
                     avg_r += image[j][i][2]
-        
+
         return (avg_b/total, avg_g/total, avg_r/total)
     return None
 
@@ -64,3 +64,37 @@ def euclidian_colour_diff(colour1, colour2):
     rdiff = rdiff * rdiff
 
     return math.sqrt(gdiff + bdiff + rdiff)
+
+
+def make_histogram(image, left, up, right, down, histogram):
+    b = [0 for _ in range(0, 256)]
+    g = [0 for _ in range(0, 256)]
+    r = [0 for _ in range(0, 256)]
+    for y in range(up, down):
+        for x in range(left, right):
+            pixel = image[y][x]
+            b[pixel[0]] += 1
+            g[pixel[1]] += 1
+            r[pixel[2]] += 1
+    #b = b[20:200]
+    #g = g[20:200]
+    #r = r[20:200]
+
+    range_array = range(0, 256)
+    if histogram:
+        plt.clf()
+        plt.cla()
+        plt.plot(range_array, b, 'b', range_array, g, 'g', range_array, r, 'r')  # including h here is crucial
+
+        plt.pause(0.0001)
+    return 20 + index_of_max(r), 20  + index_of_max(g), 20 + index_of_max(b)
+
+
+def index_of_max(arr):
+    max_val = 0
+    max_index = 0
+    for i in range(0, len(arr)):
+        if arr[i] >= max_val:
+            max_val = arr[i]
+            max_index = i
+    return max_index

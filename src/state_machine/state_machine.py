@@ -51,7 +51,7 @@ state_machine = {
 }
 
 # Always start on WAIT FOR INSTRUCTION
-current_state_id = LOCKED_AND_WAITING
+current_state_id = AT_TABLE
 
 
 def publish_state(data):
