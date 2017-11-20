@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir ~/Documents/
 cd ~/Documents/
 svn checkout https://codex.cs.bham.ac.uk/svn/int-robot/course/socspioneer
 echo '
