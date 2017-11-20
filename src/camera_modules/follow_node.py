@@ -87,25 +87,21 @@ def detect_people(image):
         rects = numpy.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
-        closest_colour_diff = 99999999 # some max number
+        min_dist_diff = 99999999 # some max number
         index = 0
         #25 33.3
         #50 66.6
         # draw the final bounding boxes
         for (xA, yA, xB, yB) in pick:
             #print (xA, yA, xB, yB)
-            new_xA = (xB - xA) / 3 + xA
-            new_yA = (yB - yA) / 4 + yA
-            new_xB = xB - (xB - xA) / 3
-            new_yB = yB - (yB - yA) / 2
-            cv2.rectangle(orig, (new_xA, new_yA), (new_xB, new_yB), (0, 255, 255), 2)
+
             cv2.rectangle(orig, (xA, yA), (xB, yB), (0, 255, 0), 2)
-            avg_rect_colour = utils_detect.detect_avg_color2(orig, [new_xA, new_yA], [new_xB, new_yB])
-            colour_diff = utils_detect.euclidian_colour_diff(avg_rect_colour, locked_colour)
-            index += 1
+
+            dist = get_distance(((xA, yA), (xB, yB)))
+
             # print colour_diff, 'index', index
-            if colour_diff < closest_colour_diff:
-                closest_colour_diff = colour_diff
+            if dist < min_dist_diff:
+                min_dist_diff = dist
                 closest_rekt = ((xA, yA), (xB, yB))
                 latest_rekt_global = closest_rekt
                 angle = detect_angle_to_person(orig, ((xA, yA), (xB, yB)))
@@ -190,38 +186,30 @@ def decide_on_thief_status():
             img = history_rgb[len(history_rgb) - 1]
             data = None
 
-          
+
             # Apply the method
             data, angle, lost, largest_rekt = detect_people(img)
-               
+
 
             if largest_rekt is not None:
-                counter = 0
                 distance = get_distance(largest_rekt)
                 ((xA, yA), (xB,yB)) = largest_rekt
                 where_do_i_think = update_distro((xB - xA)/2 + xA, 10)
                 cv2.rectangle(data, (xA, yA), (xB,yB), (0, 0, 255), 2)
             else:
                 distance = get_distance(((0,0),(400,300)))
-                update_distro_with_uniform()
+                #update_distro_with_uniform()
                 where_do_i_think = None
             # Make frame
-            if lost:
-                counter += 1
 
-            if counter == 500:
-                if distance < close_threshold:
-	            return True
-	        else:
-	            return False
- 
-            if(distance != 0):
-                print 'distance: ', distance
+            counter += 1
 
-            #if distance != 0 and distance < 1.5:
-            #    return True
+            print counter
 
-            distance = distance - 1 #don't go inside of the person please
+            if counter == 20:
+	         return True
+
+            """
             if where_do_i_think is not None:
                 cv2.rectangle(data, (where_do_i_think-1, 0), (where_do_i_think + 1,300), (255, 0, 0), 2)
                 angle = pos_to_angle(where_do_i_think)
@@ -232,8 +220,9 @@ def decide_on_thief_status():
                     # print 'Moving at (divided by 2)', angle
                     waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data':{'angle':angle,'distance':distance}}))
                     sleep(sleep_interval)
+            """
 
-     
+
             with global_lock:
                 cv2.imshow('actualimage', data)
                 cv2.waitKey(1)
@@ -295,14 +284,15 @@ def update_distro_with_uniform():
     with distro_lock:
         global distro, distro_size
         minimum_value = 0.0000001
-        importance = 1000
+        offset_value = 0.001
 
-        other_distro = [1.0/distro_size for i in range(0,400)]
+        other_distro = [1.0/distro_size for i in range(0,distro_size)]
 
-        for i in range(0, 400):
-            distro[i] = importance * distro[i] + other_distro[i]
-            if (distro[i] < minimum_value):
-                distro[i] = minimum_value
+        for i in range(0, distro_size):
+            if(distro[i] < other_distro[i]):
+                distro[i] += offset_value
+            else:
+                distro[i] = distro[i] - offset_value
 
         distro = [float(i)/sum(distro) for i in distro]
         #print distro
@@ -367,11 +357,10 @@ def callback(state_msg):
             print 'TO THE LEFT'
             waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data':{'angle':-90,'distance':0}}))
 
-        locked_colour = state['data']['colour']
+
         init_distro()
-        sleep(5)
         result = decide_on_thief_status()
-        
+
         print "result: ", result
         if result:
             print "caught "
@@ -430,6 +419,6 @@ rospy.Subscriber('/state', String, callback, queue_size=1)
 pub = rospy.Publisher('/action', String, queue_size=1)
 rospy.Subscriber('/camera/depth/image_raw', Image, save_distance)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
-rospy.Subscriber('/odom', Odometry, read_odom, queue_size=1)
+#rospy.Subscriber('/odom', Odometry, read_odom, queue_size=1)
 print callback(String(json.dumps({'id': states.ALARM, 'data': {'which_way': 'True', 'colour': [38, 54, 19]}})))
 #rospy.spin()

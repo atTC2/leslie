@@ -39,7 +39,8 @@ state_id = None
 state_data = None
 
 thief_went_right = True
-
+all_right = 0
+all_left = 0
 
 def detect_change(original_image):
     """
@@ -107,11 +108,11 @@ def detect_change(original_image):
 
 
 def decide_which_way(contours, img):
-    global thief_went_right
+    #global thief_went_right, thief_went_right_mode
+    global all_left, all_right
+
     if(len(contours) > 0):
-        vertical, the_width = img.shape[:2]
-        all_left = 0
-        all_right = 0
+        _, the_width = img.shape[:2]
         for contour in contours:
             x, y, w, h = cv2.boundingRect(contour)
             area = w * h
@@ -123,8 +124,9 @@ def decide_which_way(contours, img):
             if x + w >= (the_width/2):
                 all_right += area
 
-        thief_went_right = all_right > all_left
+        #thief_went_right = all_right > all_left
 
+    #print thief_went_right
 
 def detect_significant_change(original_image):
     """
@@ -159,18 +161,10 @@ def detect_significant_change(original_image):
 
     decided_colour = None
     if alarm == True:
-        avg_b = 0
-        avg_g = 0
-        avg_r = 0
-        total = 0
-        for countours in previous_contours:
-            if(len(countours) > 0):
-                (b,g,r) = utils_detect.detect_avg_color(original_image, countours)
-                avg_b += b
-                avg_g += g
-                avg_r += r
-                total += 1
-        decided_colour = [avg_b/total, avg_g/total, avg_r/total]
+        flatten = [item for sublist in previous_contours for item in sublist]
+        decided_colour = utils_detect.detect_avg_color(original_image,flatten)
+
+    #print decided_colour
 
     # If over half of the recent change detection is 'change detected', then we should return a significant change
     return alarm, decided_colour
@@ -230,7 +224,7 @@ def run():
     global state_id
     global state_data
 
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(1)
 
     running = True
     while running:
@@ -239,11 +233,11 @@ def run():
 
         # Apply the method
         changed, decided_colour = detect_significant_change(frame)
-
+        print all_right > all_left
         #print changed, decided_colour
         if changed and state_id == states.LOCKED_AND_WAITING:
             # publish alarm
-            state_data['which_way'] = thief_went_right
+            state_data['which_way'] = all_right > all_left
             state_data['colour'] = decided_colour
             pub.publish(json.dumps({'id': actions.MOVEMENT_DETECTED, 'data': state_data}))
             running = False
@@ -264,6 +258,7 @@ def callback(state_msg):
     global running
     global state_id
     global state_data
+    global all_left, all_right
     state_json = json.loads(state_msg.data)
     state_id = state_json['id']
     state_data = state_json['data']
@@ -271,6 +266,8 @@ def callback(state_msg):
     print state_json
     if state_id == states.LOCKING:
         print 'Locking'
+        all_left = 0
+        all_right = 0
         # Start finding table in a new thread...
         Thread(target=run).start()
     elif state_id == states.LOCKED_AND_WAITING or state_id == states.ALARM:
@@ -287,6 +284,6 @@ rospy.Subscriber('/state', String, callback, queue_size=10)
 pub = rospy.Publisher('/action', String, queue_size=10)
 
 # TESTING
-# callback(String(json.dumps({'id': states.LOCKING, 'data': {'current_owner': 'Seb'}})))
+callback(String(json.dumps({'id': states.LOCKING, 'data': {'current_owner': 'Seb'}})))
 
 rospy.spin()

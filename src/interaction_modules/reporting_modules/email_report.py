@@ -14,7 +14,7 @@ reporter = IncidentReport()
 pub = rospy.Publisher('/action', String, queue_size=10)
 
 
-state_id = states.AT_HOME
+state_id = states.WAIT_FOR_INSTRUCTION
 
 
 def _state_callback(state_msg):
