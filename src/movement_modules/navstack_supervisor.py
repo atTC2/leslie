@@ -109,7 +109,7 @@ def go_to_goal(goal, state_json, attempt):
             # Ensure the correct table has been reached
             speech_engine.say("is this the table you meant?")
             owner = state_json['data']['current_owner']
-            friend = state_json['data']['friend']
+            friend = state_json['data'].get('friend', None)
             yes_no_listener.callback = partial(table_confirmed, owner, friend)
         elif state_json['id'] == states.MOVE_TO_HOME:
             print 'successfully reached home'
@@ -138,7 +138,7 @@ def table_confirmed(owner, friend, right_table):
     :param friend: The added friend
     :param right_table: Whether the user said the current location is correct
     :type owner: str
-    :type friend: str
+    :type friend: str or None
     :type right_table: bool
     """
     action_data = {

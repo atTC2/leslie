@@ -108,7 +108,7 @@ def state_callback(state_msg):
         return
     elif state['id'] == states.LOCKED_AND_WAITING:
         owner = state['data']['current_owner']
-        friend = state['data']['friend']
+        friend = state['data'].get('friend', None)
         rospy.sleep(SLEEP_TIME)
         result = []
         while owner not in result and friend not in result:
