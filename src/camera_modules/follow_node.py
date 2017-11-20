@@ -37,7 +37,7 @@ distro_size = 400
 
 locked_colour = None
 last_degree = None
-fov = 120
+fov = 120.0
 
 waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=10)
 odom_pub = rospy.Publisher('cmd_vel', Twist, queue_size=100)
@@ -242,19 +242,17 @@ def decide_on_thief_status():
 
 
 def pos_to_angle(pos):
-    fov = 120.0
-    global distro_size
-    notch = distro_size / 120.0
+    global distro_size, fov
+    notch = distro_size / fov
 
     return int(fov * pos / distro_size)
 
 
 def angle_to_prob(angle):
-    fov = 120.0
     global distro_size, distro
     # print msg.twist.twist.linear.x
 
-    notch = distro_size / 120.0
+    notch = distro_size / fov
 
     if (angle == 0):
         return max_in_range(int(distro_size / 2), 20, distro, distro_size)
@@ -341,15 +339,13 @@ def callback(state_msg):
     if state['id'] == states.ALARM:
         print 'LOOKING FOR THIEF'
         which_way = state['data']['which_way']
-
-        base_data = Twist()
+        
         if which_way or which_way == 'True':
             print 'TO THE RIGHT'
             waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': 90, 'distance': 0}}))
         if not which_way or which_way == 'False':
             print 'TO THE LEFT'
             waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': -90, 'distance': 0}}))
-        odom_pub.publish(base_data)
         locked_colour = state['data']['colour']
         init_distro()
         result = decide_on_thief_status()
@@ -374,10 +370,9 @@ def callback(state_msg):
 
 
 def read_odom(msg):
+    global last_degree, distro, distro_size, fov
     if len(distro) > 0:
-        global last_degree, distro, distro_size
         with distro_lock:
-            fov = 120.0
             minimum_value = min(distro)
             quant = Quaternion()
             quant.x = 0
