@@ -84,6 +84,7 @@ def detect_people(image):
     # fairly large overlap threshold to try to maintain overlapping
     # boxes that are still people
     closest_rekt = None
+    print 'person'
     if len(rects) != 0:
         rects = numpy.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
@@ -99,8 +100,13 @@ def detect_people(image):
             new_yA = (yB - yA) / 4 + yA
             new_xB = xB - (xB - xA) / 3
             new_yB = yB - (yB - yA) / 2
+            if new_xB >= 400:
+                new_xB = 399
+            if new_yB >= 300:
+                new_yB = 299
             cv2.rectangle(orig, (new_xA, new_yA), (new_xB, new_yB), (0, 255, 255), 2)
             cv2.rectangle(orig, (xA, yA), (xB, yB), (0, 255, 0), 2)
+            make_histogram(orig, new_xA, new_yA, new_xB, new_yB)
             avg_rect_colour = utils_detect.detect_avg_color2(orig, [new_xA, new_yA], [new_xB, new_yB])
             colour_diff = utils_detect.euclidian_colour_diff(avg_rect_colour, locked_colour)
             index += 1
@@ -114,6 +120,39 @@ def detect_people(image):
         lost = False
     
     return orig, angle, lost, closest_rekt
+
+
+def make_histogram(image, left, up, right, down):
+    b = [0 for _ in range(0, 256)]
+    g = [0 for _ in range(0, 256)]
+    r = [0 for _ in range(0, 256)]
+    for y in range(up, down):
+        for x in range(left, right):
+            pixel = image[y][x]
+            b[pixel[0]] += 1
+            g[pixel[1]] += 1
+            r[pixel[2]] += 1
+    b = b[20:200]
+    g = g[20:200]
+    r = r[20:200]
+    print 'r', 20 + index_of_max(r), 'g', 20 + index_of_max(g), 'b', 20 + index_of_max(b)
+    range_array = range(20, 200)
+    plt.clf()
+    plt.cla()
+    plt.plot(range_array, b, 'b', range_array, g, 'g', range_array, r, 'r')  # including h here is crucial
+
+    plt.pause(0.0001)
+    return None
+
+
+def index_of_max(arr):
+    max_val = 0
+    max_index = 0
+    for i in range(0, len(arr)):
+        if arr[i] >= max_val:
+            max_val = arr[i]
+            max_index = i
+    return max_index
 
 
 def get_distance(((xA, yA), (xB, yB))):
@@ -313,11 +352,11 @@ def update_distro_with_uniform():
         # print distro
         
         range_array = range(0, 400)
-        plt.clf()
-        plt.cla()
-        plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')  # including h here is crucial
-        
-        plt.pause(0.0001)
+        # plt.clf()
+        # plt.cla()
+        # plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')  # including h here is crucial
+        #
+        # plt.pause(0.0001)
         return distro.index(max(distro))
 
 
@@ -343,12 +382,12 @@ def update_distro(mean, std_dev):
         distro = [float(i) / sum(distro) for i in distro]
         # print distro
         
-        range_array = range(0, 400)
-        plt.clf()
-        plt.cla()
-        plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')  # including h here is crucial
-        
-        plt.pause(0.0001)
+        # range_array = range(0, 400)
+        # plt.clf()
+        # plt.cla()
+        # plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')  # including h here is crucial
+        #
+        # plt.pause(0.0001)
         return distro.index(max(distro))
 
 
