@@ -35,6 +35,8 @@
   </include>
   <node name="voice_control" pkg="leslie" type="voice_control.py" output="screen"
         launch-prefix="$(arg sleep) 6" />
+  <node name="twitter_control" pkg="leslie" type="twitter_control.py" output="screen"
+        launch-prefix="$(arg sleep) 6" />
   <node name="change_node" pkg="leslie" type="change_node.py" output="screen"
         launch-prefix="$(arg sleep) 20" />
   <node name="notifications_manager" pkg="leslie" type="notifications_manager.py" output="screen"

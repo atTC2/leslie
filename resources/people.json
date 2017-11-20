@@ -1,25 +1,23 @@
 {
     "Tom": {
         "email_address": "leslietherobot.aka.pips@gmail.com",
-        "twitter": "leslietherobot"
+        "twitter": "TomBClarke"
     },
     "Ben": {
-        "email_address": "leslietherobot.aka.pips@gmail.com"
+        "email_address": "leslietherobot.aka.pips@gmail.com",
+        "twitter": "ben_durrans"
     },
     "Seb": {
-        "email_address": "leslietherobot.aka.pips@gmail.com",
-        "twitter": "leslietherobot"
+        "email_address": "leslietherobot.aka.pips@gmail.com"
     },
     "Chrystal": {
-        "email_address": "leslietherobot.aka.pips@gmail.com",
-        "twitter": "leslietherobot"
+        "email_address": "leslietherobot.aka.pips@gmail.com"
     },
     "Hung": {
         "email_address": "leslietherobot.aka.pips@gmail.com",
-        "twitter": "leslietherobot"
+        "twitter": "ParityB1t"
     },
     "Cameron": {
-        "email_address": "leslietherobot.aka.pips@gmail.com",
-        "twitter": "leslietherobot"
+        "email_address": "leslietherobot.aka.pips@gmail.com"
     }
 }

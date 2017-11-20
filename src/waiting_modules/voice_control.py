@@ -61,9 +61,16 @@ def state_callback(state_msg):
     global get_friend, get_table, owner, friend
     state_json = json.loads(state_msg.data)
     state_id = state_json['id']
+
+    # Ensure nothing is listening and reset values
+    get_table.stop_listening()
+    get_friend.stop_listening()
+    owner = None
+    friend = None
+
+    # Do things dependant upon the new state
     if state_id == states.LISTENING_FOR_TABLE:
         owner = state_json['data']['current_owner']
-
         # Determine if they have already selected (or not selected) a friend (i.e. have rejected a table)
         if 'friend' not in state_json['data']:
             # Not before had the friend option
@@ -72,13 +79,6 @@ def state_callback(state_msg):
             # Already selected friend, so save it here and go straight to table selection
             friend = state_json['data']['friend']
             get_table.listen()
-
-    else:
-        # Ensure nothing is listening and reset values
-        get_table.stop_listening()
-        get_friend.stop_listening()
-        owner = None
-        friend = None
 
 
 # Set callbacks
