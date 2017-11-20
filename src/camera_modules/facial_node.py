@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from functools import partial
+from threading import Thread
 
 import face_recognition  # sudo pip install face_recognition
 import cv2
@@ -104,7 +105,7 @@ def state_callback(state_msg):
     print "state_msg: ", state_msg
     state = json.loads(state_msg.data)
     if state['id'] == states.AT_HOME:
-        get_face()
+        Thread(target=get_face).start()
         return
     elif state['id'] == states.LOCKED_AND_WAITING:
         owner = state['data']['current_owner']
@@ -115,6 +116,12 @@ def state_callback(state_msg):
             result = camera_node.get_data_from_camera(CAMERA_INDEX, detect, states.LOCKED_AND_WAITING, states.ALARM)
             if result is None:
                 return
+
+        if owner in result:
+            speech_engine.say('Welcome back ' + owner)
+        if friend in result:
+            speech_engine.say('Hello ' + friend)
+
         action = {
             'id': actions.FACE_RECOGNISED,
             'data': {

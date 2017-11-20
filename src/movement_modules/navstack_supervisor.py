@@ -37,7 +37,7 @@ map_resolution = meta_data.resolution
 #  --- Create the Pose for leslie at each table
 
 #  The orientation for leslie to face the table, taken from Rviz
-table_orientation = Quaternion(0.0, 0.0, -0.200032655658, 0.979789230738)
+table_orientation = Quaternion(0.0, 0.0, 0.0, 1.0)
 table = []
 for i in range(5):
     p = Pose()
@@ -80,6 +80,7 @@ def state_callback(state_msg):
     if state_json['id'] == states.MOVE_TO_TABLE:
         goal.target_pose.pose = table[state_json['data']['tableID']]
     elif state_json['id'] == states.MOVE_TO_HOME:
+        speech_engine.say('Going home')
         goal.target_pose.pose = home_pose
     else:
         return
