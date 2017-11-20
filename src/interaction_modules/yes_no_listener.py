@@ -27,7 +27,8 @@ class YesNoListener:
             # Don't run now
             return
 
-        command = msg.data
+        # Remove duplicate words
+        command = ' '.join(set(msg.data.split()))
 
         if command in self.commands:
             if command.find('yes') != -1:

@@ -60,7 +60,7 @@ pico2wave -l=en-GB -w="${wav0}" "${2}"
 
 # Speed up Leslie's voice.
 wav1="${tmpDir}/out1.wav"
-sox "${wav0}" "${wav1}" vol 0.5 tempo "${1}"
+sox "${wav0}" "${wav1}" vol 0.8 tempo "${1}"
 
 # Play the speech.
 aplay -q "${wav1}"

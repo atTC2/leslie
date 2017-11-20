@@ -1,7 +1,7 @@
 obstacle_range: 2.0
 raytrace_range: 3.0
 footprint: [[0.225, 0.225], [-0.225, 0.225], [-0.225, -0.225], [0.225, -0.225]]
-footprint_padding: 0.01
+footprint_padding: 0.12
 
 
 robot_base_frame: /base_link
