@@ -10,7 +10,7 @@ from std_msgs.msg import String
 import json
 
 from interaction_modules.yes_no_listener import YesNoListener
-from state_machine import states, actions
+from state_machine import states, actions, state_util
 import camera_node
 from util_modules import config_access, speech_engine
 
@@ -169,8 +169,9 @@ def got_face(name, is_them):
     pub.publish(json.dumps(action))
 
 
-rospy.init_node("facial_node")
-pub = rospy.Publisher("/action", String, queue_size=10)
+# ROS node stuff
+rospy.init_node('facial_node')
+pub = rospy.Publisher('/action', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
-state_callback(String(json.dumps({"id": states.AT_HOME})))
+state_util.prime_state_callback_with_starting_state(state_callback)
 rospy.spin()

@@ -9,7 +9,7 @@ from threading import Thread
 from Queue import Queue
 from datetime import datetime
 from std_msgs.msg import String
-from state_machine import states, actions
+from state_machine import states, actions, state_util
 from camera_modules import change_util
 from camera_modules.change_util import crop_to_table, convert_to_grey, calculate_contours, save_frame, draw_changes
 from util_modules import config_access, speech_engine
@@ -208,7 +208,7 @@ def run():
     reset(cap)
 
 
-def callback(state_msg):
+def state_callback(state_msg):
     """
     Processes updates to state information
     :param state_msg: The new state information
@@ -236,10 +236,7 @@ def callback(state_msg):
 
 # ROS node stuff
 rospy.init_node('change_node')
-rospy.Subscriber('/state', String, callback, queue_size=10)
 pub = rospy.Publisher('/action', String, queue_size=10)
-
-# TESTING
-# callback(String(json.dumps({'id': states.LOCKING, 'data': {'current_owner': 'Seb'}})))
-
+rospy.Subscriber('/state', String, state_callback, queue_size=10)
+state_util.prime_state_callback_with_starting_state(state_callback)
 rospy.spin()

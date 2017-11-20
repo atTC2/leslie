@@ -4,10 +4,10 @@ import rospy
 import json
 from std_msgs.msg import String
 from tweepy import TweepError, StreamListener, Stream
-from state_machine import actions, states
+from state_machine import actions, states, state_util
 from util_modules import people_info, twitter_api
 
-state_id = states.AT_HOME
+state_id = state_util.get_start_state()
 
 if __name__ != '__main__':
     from sys import stderr
