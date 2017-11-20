@@ -8,7 +8,7 @@
         launch-prefix="$(arg sleep) 3">
     <param name="initial_pose_x"            value="-1.38991832733"/>
     <param name="initial_pose_y"            value="-9.28993225098"/>
-    <param name="initial_pose_a"            value="21.70767009"/>
+    <param name="initial_pose_a"            value="2.63545"/>
     
     <param name="min_particles"             value="500"/>
     <param name="max_particles"             value="1000"/>
