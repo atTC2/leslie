@@ -50,12 +50,20 @@ table[1].position = Point(-1.2, -2.0, 0)
 table[2].position = Point(-0.04291536808, 0.249539896846, 0)
 table[3].position = Point(1.05023245811, 2.81623911858, 0)
 table[4].position = Point(2.22847919464, 5.56012153625, 0)
+table[4].orientation = Quaternion(0.0, 0.0, 0.996, 0.087)
 
 #  --- --- --- --- --- ---
 
 home_pose = Pose()
+# starting position 1
 home_pose.position = Point(-1.38991832733, -9.28993225098, 0)
 home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
+# starting position 2
+# home_pose.position = Point(5.50601768494, 8.32301235199, 0)
+# home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
+# starting position 3
+# home_pose.position = Point(-1.44410264492, 0.979160249233, 0)
+# home_pose.orientation = Quaternion(0, 0, -0.206,  0.979)
 
 #  create action client, interface with navstack via client-server model
 client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
