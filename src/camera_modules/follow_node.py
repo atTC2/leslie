@@ -42,13 +42,13 @@ state_id = state_util.get_start_state()
 
 
 def save_distance(img):
-    '''
+    """
     Saves the depth image to history.
     If the history is full, pop the oldest image off.
 
     :param img: depth image
     :type img: sensor_msgs.msg.Image
-    '''
+    """
     global max_history, depth_history, global_lock
 
     # use a cv bridge to convert depth image into c2 image
