@@ -6,9 +6,9 @@ from imutils.object_detection import non_max_suppression
 import sys
 
 colour_diff_threshold = 40
+fov = 120.0  # camera field of view
 
-
-def detect_closest_to_thief(unmodified_image, locked_colour):
+def detect_closest_to_thief(unmodified_image, locked_colour, distro_size):
     '''
     Given an image, detect if there are people inside it.
     If there are people in the image, return the angle and the rectangle
@@ -78,7 +78,7 @@ def detect_closest_to_thief(unmodified_image, locked_colour):
                 closest_colour_diff = colour_diff
                 closest_rect = ((xA, yA), (xB, yB))
                 latest_rect_global = closest_rect
-                angle = detect_angle_to_person(unmodified_image, ((xA, yA), (xB, yB)))
+                angle = detect_angle_to_person(unmodified_image, ((xA, yA), (xB, yB)), distro_size)
 
         lost = closest_colour_diff > colour_diff_threshold
 
@@ -203,7 +203,7 @@ def index_of_max(arr):
     return max_index
 
 
-def detect_angle_to_person(image, rectangle):
+def detect_angle_to_person(image, rectangle, distro_size):
     '''
     Given an image and points describing a rectangle,
     which represent a person,
@@ -217,8 +217,7 @@ def detect_angle_to_person(image, rectangle):
     :return: angle to person from centre of camera
     :rtype: float
     '''
-    global distro_size, fov
-
+    global fov
     top_left = rectangle[0][0]
     bottom_right = rectangle[1][0]
     if (bottom_right >= distro_size):

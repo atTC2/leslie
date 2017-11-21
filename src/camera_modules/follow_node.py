@@ -35,10 +35,8 @@ distro_size = 400  # size of distribution
 # --------------------------------------------------
 
 last_degree = None  # the angle calculated by actino model
-fov = 120.0  # camera field of view
 
 waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=10)
-odom_pub = rospy.Publisher('cmd_vel', Twist, queue_size=100)
 
 state_id = state_util.get_start_state()
 
@@ -120,7 +118,7 @@ def decide_on_thief_status():
             img = history_rgb[len(history_rgb) - 1]
 
             # Apply the method
-            drawn_on_image, angle, lost, closest_rect, latest_rect = detect_closest_to_thief(img, locked_colour)
+            drawn_on_image, angle, lost, closest_rect, latest_rect = detect_closest_to_thief(img, locked_colour, distro_size)
             latest_rect_global = latest_rect
             if closest_rect is not None:
                 ((xA, yA), (xB, yB)) = closest_rect
@@ -208,5 +206,6 @@ pub = rospy.Publisher('/action', String, queue_size=1)
 backhome_pub = rospy.Publisher('/backhome', String, queue_size=1)
 rospy.Subscriber('/camera/depth/image_raw', Image, save_distance)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
+state_util.prime_state_callback_with_starting_state(callback)
 # print callback(String(json.dumps({'id': states.ALARM, 'data': {'which_way': 'False', 'colour': [68, 88, 186]}})))
 rospy.spin()
