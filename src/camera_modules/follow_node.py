@@ -34,8 +34,8 @@ distro = []  # distribution representing `belief`
 distro_size = 400  # size of distribution
 # --------------------------------------------------
 
-last_degree = None
-fov = 120.0
+last_degree = None  # the angle calculated by actino model
+fov = 120.0  # camera field of view
 
 waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=10)
 odom_pub = rospy.Publisher('cmd_vel', Twist, queue_size=100)
@@ -100,31 +100,32 @@ def rgb_color(img):
 
 def decide_on_thief_status():
     '''
-    Detects where the thief is from camera input as angle and distance.
+    Detects where the thief is from camera input.
     From the detection information, update the probability distribution
     that reflects the 'belief' of potential angle and distance
     the thief is actually away from the robot.
+    This code is just for showing who system believes to be thief.
+    After a timeout the system stops trying to detect the thief,
+    this also occurs if the system has lost the thief for > 200 frames.
 
-    If the camera no longer detects anyone, ensure that is consistent for `x`
-    frames. Camera no longer detects if person is too close or too far
-    If the last `distance` detected 
     '''
     global locked_colour
+    global history_rgb, max_history, latest_rect_global, locked_colour
+    global distro, distro_size
     counter = 0
     timeout = 0
 
     while state_id == states.ALARM:
-        global history_rgb, max_history, latest_rect_global, locked_colour
         if (len(history_rgb) >= max_history):
             img = history_rgb[len(history_rgb) - 1]
 
             # Apply the method
-            drawn_on_image, angle, lost, largest_rekt = detect_closest_to_thief(img, locked_colour)
-
-            if largest_rekt is not None:
-                ((xA, yA), (xB, yB)) = largest_rekt
+            drawn_on_image, angle, lost, closest_rect, latest_rect = detect_closest_to_thief(img, locked_colour)
+            latest_rect_global = latest_rect
+            if closest_rect is not None:
+                ((xA, yA), (xB, yB)) = closest_rect
                 with distro_lock:
-                    update_distro((xB - xA) / 2 + xA, 10)
+                    update_distro((xB - xA) / 2 + xA, 10, distro, distro_size)
                 cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
             # Make frame
             if lost:
@@ -169,6 +170,16 @@ def callback(state_msg):
 
 
 def lookout_for_thief(state):
+    '''
+    When the system alarms,
+    turn left or right depending on which way the thief was
+    detected to have came from, and start recoding video.
+    After a certain timeout, turn back to the table its at,
+    unless of course the owner has returned.
+
+    :param state: The full state data
+    :type state: dict (json)
+    '''
     global locked_colour, waypoint_pub, distro, distro_size
     print 'LOOKING FOR THIEF'
     which_way = state['data']['which_way']
@@ -188,17 +199,6 @@ def lookout_for_thief(state):
         return
 
     backhome_pub.publish(json.dumps({'id': state}))
-
-
-def shift_arr(arr, by, default):
-    if by < 0:
-        arr.reverse()
-        res = shift_arr(arr, -by, default)
-        res.reverse()
-        return res
-    new_arr = [default for _ in range(0, by)]
-    new_arr.extend(arr[0:distro_size - by])
-    return new_arr
 
 
 rospy.init_node('follow_node')

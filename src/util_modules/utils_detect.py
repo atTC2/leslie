@@ -86,6 +86,10 @@ def detect_closest_to_thief(unmodified_image, locked_colour):
 
 
 def euclidian_colour_diff(colour1, colour2):
+    '''
+    Given two colours, calculate the their difference as
+    euclidian distance = sqrt(r^2+g^2+b^2)
+    '''
     gdiff = colour2[0] - colour1[0]
     bdiff = colour2[1] - colour1[1]
     rdiff = colour2[2] - colour1[2]
@@ -98,6 +102,23 @@ def euclidian_colour_diff(colour1, colour2):
 
 
 def get_mode_colour(image, left, up, right, down, histogram=False):
+    '''
+    For all the pixels in the rectangle, representing a person,
+    for each component r,g,b in that pixel, tally their value for
+    their respective component.
+    Return the mode value for each component.
+
+    :param image: the original image
+    :type image: numpy.array
+    :param left: bounding box top left x position
+    :type left: float
+    :param up: bounding box top left y position
+    :type up: float
+    :param right: bounding box bottom right x position
+    :type right: float
+    :param down: bounding box bottom right y position
+    :type down: float
+    '''
     b = [0 for _ in range(0, 256)]
     g = [0 for _ in range(0, 256)]
     r = [0 for _ in range(0, 256)]
@@ -119,6 +140,10 @@ def get_mode_colour(image, left, up, right, down, histogram=False):
 
 
 def index_of_max(arr):
+    '''
+    Given an array of values,
+    returns the index of the highest value
+    '''
     max_val = 0
     max_index = 0
     for i in range(0, len(arr)):
@@ -195,29 +220,25 @@ def get_distance(((xA, yA), (xB, yB)), depth_history):
     return avg_distance / 1000.0
 
 
-def max_in_range(mean, i, distro, distro_size):
-    min_mean = mean - i
-    max_mean = mean + i
-    if min_mean < 0:
-        min_mean = 0
-    if max_mean > (distro_size - 1):
-        max_mean = distro_size - 1
-
-    max_value = -1
-
-    for j in range(min_mean, max_mean):
-        if (max_value < distro[j]):
-            max_value = distro[j]
-
-    # print 'max', max_value, 'index', i, 'mean', mean
-    return max_value
-
-
 def init_distro(distro_size):
+    '''
+    Returns an evenly distributed probabililty distribution
+    '''
     return [1.0 / distro_size for i in range(0, 400)]
 
 
 def normpdf(x, mean, sd):
+    '''
+    Returns a value for a probability distribution
+    based on the index, the mean value and the standard deviation
+
+    :param x: index
+    :type x: float
+    :param mean: mean value
+    :type mean: float
+    :param sd: the standard deviation
+    :type sd: float
+    '''
     var = float(sd) ** 2
     pi = 3.1415926
     denom = (2 * pi * var) ** .5
@@ -226,6 +247,23 @@ def normpdf(x, mean, sd):
 
 
 def update_distro(mean, std_dev, distro, distro_size):
+    '''
+    Updates a probability distribution by creating a new distribution
+    based on the passed in values of the mean (angle as pixel index) and
+    the standard deviation,
+    then add that newly created distribution to the old one
+    multiplied by weighting. Afterwards normalise etc.
+
+    :param mean: value to create distribution around,
+    usually middle pixel of boudning box of person
+    :param type: float
+    :param std_dev: standard deviation for creating distribution
+    :param type: float
+    :param distro:  distribution to update
+    :type distro: float[]
+    :param distro_size:  size of distribution
+    :type distro: float
+    '''
     minimum_value = 0.0000001
     importance = 3
 
