@@ -2,7 +2,7 @@
 
 import rospy
 import cv2
-from cv_bridge import CvBridge, CvBridgeError   # pylint: disable=F0401
+from cv_bridge import CvBridge   # pylint: disable=F0401
 from sensor_msgs.msg import Image
 import numpy as np
 import scipy.ndimage as ndimage
@@ -57,7 +57,7 @@ def get_distance(img):
     global last_images, mins, maxes, alarm_count, ith_frame, alarm
 
     # Check if we are still in the right state to keep running this loop.
-    if running == True:
+    if running:
 
         # Convert raw depth camera feed to 16 bit greyscale cv image.
         bridge = CvBridge()
@@ -78,8 +78,7 @@ def get_distance(img):
                     count_right = 0
                     for i in range(0, max_height_cropped - min_height_cropped):
                         for j in range(0, max_width_cropped - min_width_cropped):
-                            if(cv_image[i][j][0] > maxes[i][j][0] or
-                                cv_image[i][j][0] < mins[i][j][0]):
+                            if cv_image[i][j][0] > maxes[i][j][0] or cv_image[i][j][0] < mins[i][j][0]:
                                 # Calculate what side the movement is on, for turning to follow thief.
                                 if j < (max_width_cropped - min_width_cropped)/2:
                                     count_left += 1
@@ -87,7 +86,7 @@ def get_distance(img):
                                     count_right +=1
                                 # Create rectangle around movement
                                 cv2.rectangle(saved_full_image, (j, i), (j, i), (0, 0, 255), 2)
-                    if(count_left + count_right > min_pixel_change_count):
+                    if count_left + count_right > min_pixel_change_count:
                         alarm_count += 1
                     else:
                         alarm_count = 0
