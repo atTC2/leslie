@@ -181,6 +181,7 @@ def get_mode_colour(image, left, up, right, down, histogram=False):
 
     range_array = range(0, 256)
     if histogram:
+        plt.figure(200)
         plt.clf()
         plt.cla()
         plt.plot(range_array, b, 'b', range_array, g, 'g', range_array, r, 'r')  # including h here is crucial
@@ -332,6 +333,7 @@ def update_distro(mean, std_dev, distro, distro_size):
     distro = [float(i) / sum(distro) for i in distro]
 
     range_array = range(0, 400)
+    plt.figure(100)
     plt.clf()
     plt.cla()
     plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')  # including h here is crucial
