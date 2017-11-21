@@ -12,9 +12,6 @@ import json
 from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import states, actions, state_util
 import camera_node
-from util_modules import config_access
-from util_modules import speech_engine
-
 from util_modules import config_access, speech_engine
 
 if __name__ != '__main__':

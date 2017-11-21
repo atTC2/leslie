@@ -8,8 +8,9 @@ import sys
 colour_diff_threshold = 40
 fov = 120.0  # camera field of view
 
+
 def detect_closest_to_thief(unmodified_image, locked_colour, distro_size):
-    '''
+    """
     Given an image, detect if there are people inside it.
     If there are people in the image, return the angle and the rectangle
     of the person which most closely match the thief by shirt colour.
@@ -24,7 +25,7 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size):
     if a person was found,
     rectangle bounding box of person most matching to thief
     :rtype: numpy.ndarray, float, bool, ((float, float), (float, float))
-    '''
+    """
 
     # use hog detector
     hog = cv2.HOGDescriptor()
@@ -86,10 +87,10 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size):
 
 
 def euclidian_colour_diff(colour1, colour2):
-    '''
+    """
     Given two colours, calculate the their difference as
     euclidian distance = sqrt(r^2+g^2+b^2)
-    '''
+    """
     gdiff = colour2[0] - colour1[0]
     bdiff = colour2[1] - colour1[1]
     rdiff = colour2[2] - colour1[2]
@@ -191,10 +192,10 @@ def get_mode_colour(image, left, up, right, down, histogram=False):
 
 
 def index_of_max(arr):
-    '''
+    """
     Given an array of values,
     returns the index of the highest value
-    '''
+    """
     max_val = 0
     max_index = 0
     for i in range(0, len(arr)):
@@ -205,7 +206,7 @@ def index_of_max(arr):
 
 
 def detect_angle_to_person(image, rectangle, distro_size):
-    '''
+    """
     Given an image and points describing a rectangle,
     which represent a person,
     calculate the angle to turn to face that person.
@@ -217,7 +218,7 @@ def detect_angle_to_person(image, rectangle, distro_size):
     :type rectangle:((float, float),(float, float))
     :return: angle to person from centre of camera
     :rtype: float
-    '''
+    """
     global fov
     top_left = rectangle[0][0]
     bottom_right = rectangle[1][0]
@@ -239,14 +240,14 @@ def detect_angle_to_person(image, rectangle, distro_size):
 
 
 def get_distance(((xA, yA), (xB, yB)), depth_history):
-    '''
+    """
     Get the distance to a bounding box, represents a person
 
     :param: points, top-left and bottom-right of the bounding box
     :type: ((float, float), (float, float))
     :return: distance from camera to person
     :rtype: float
-    '''
+    """
     saved_history = depth_history[:]
     avg_distance = 0
     for depth_image in saved_history:
@@ -271,14 +272,14 @@ def get_distance(((xA, yA), (xB, yB)), depth_history):
 
 
 def init_distro(distro_size):
-    '''
+    """
     Returns an evenly distributed probabililty distribution
-    '''
+    """
     return [1.0 / distro_size for i in range(0, 400)]
 
 
 def normpdf(x, mean, sd):
-    '''
+    """
     Returns a value for a probability distribution
     based on the index, the mean value and the standard deviation
 
@@ -288,7 +289,7 @@ def normpdf(x, mean, sd):
     :type mean: float
     :param sd: the standard deviation
     :type sd: float
-    '''
+    """
     var = float(sd) ** 2
     pi = 3.1415926
     denom = (2 * pi * var) ** .5
@@ -297,7 +298,7 @@ def normpdf(x, mean, sd):
 
 
 def update_distro(mean, std_dev, distro, distro_size):
-    '''
+    """
     Updates a probability distribution by creating a new distribution
     based on the passed in values of the mean (angle as pixel index) and
     the standard deviation,
@@ -313,7 +314,7 @@ def update_distro(mean, std_dev, distro, distro_size):
     :type distro: float[]
     :param distro_size:  size of distribution
     :type distro: float
-    '''
+    """
     minimum_value = 0.00001
     importance = 7
 

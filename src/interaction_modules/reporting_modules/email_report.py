@@ -4,12 +4,8 @@ from datetime import datetime
 from functools import partial
 from os.path import getctime
 from sys import stderr
-
-import rospy
 from std_msgs.msg import String
-
 from interaction_modules.email_util import create_email, send_email, attach_body, attach_file
-from state_machine import actions, states, state_util
 from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import actions
 from util_modules import speech_engine

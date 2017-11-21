@@ -60,7 +60,7 @@ def save_distance(img):
     # add to history
     depth_history.append(cv_image)
     # pop oldest if reach max size of history
-    if(len(depth_history) > max_history):
+    if len(depth_history) > max_history:
         depth_history = depth_history[1:]
 
     # create a colour image out of the depth image to show
@@ -80,13 +80,13 @@ def save_distance(img):
 
 
 def rgb_color(img):
-    '''
+    """
     Convert the Depth image into an RGB image.
     RGB image is used for shirt colour and define angle to person
 
     :param img: image to convert
     :type img: nump.array/cv2.image
-    '''
+    """
     global history_rgb, max_history, global_lock
     bridge = CvBridge()
     img = bridge.imgmsg_to_cv2(img, "passthrough")
@@ -97,7 +97,7 @@ def rgb_color(img):
 
 
 def decide_on_thief_status():
-    '''
+    """
     Detects where the thief is from camera input.
     From the detection information, update the probability distribution
     that reflects the 'belief' of potential angle and distance
@@ -105,8 +105,7 @@ def decide_on_thief_status():
     This code is just for showing who system believes to be thief.
     After a timeout the system stops trying to detect the thief,
     this also occurs if the system has lost the thief for > 200 frames.
-
-    '''
+    """
     global locked_colour
     global history_rgb, max_history, latest_rect_global, locked_colour
     global distro, distro_size
@@ -114,7 +113,7 @@ def decide_on_thief_status():
     timeout = 0
 
     while state_id == states.ALARM:
-        if (len(history_rgb) >= max_history):
+        if len(history_rgb) >= max_history:
             img = history_rgb[len(history_rgb) - 1]
 
             # Apply the method
@@ -168,7 +167,7 @@ def callback(state_msg):
 
 
 def lookout_for_thief(state):
-    '''
+    """
     When the system alarms,
     turn left or right depending on which way the thief was
     detected to have came from, and start recoding video.
@@ -177,7 +176,7 @@ def lookout_for_thief(state):
 
     :param state: The full state data
     :type state: dict (json)
-    '''
+    """
     global locked_colour, waypoint_pub, distro, distro_size
     print 'LOOKING FOR THIEF'
     which_way = state['data']['which_way']
@@ -201,11 +200,10 @@ def lookout_for_thief(state):
 
 rospy.init_node('follow_node')
 # ROS node stuff
-rospy.Subscriber('/state', String, callback, queue_size=1)
-pub = rospy.Publisher('/action', String, queue_size=1)
+rospy.Subscriber('/state', String, callback, queue_size=10)
+pub = rospy.Publisher('/action', String, queue_size=10)
 backhome_pub = rospy.Publisher('/backhome', String, queue_size=1)
-rospy.Subscriber('/camera/depth/image_raw', Image, save_distance)
+rospy.Subscriber('/camera/depth/image_raw', Image, save_distance, queue_size=1)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
 state_util.prime_state_callback_with_starting_state(callback)
-# print callback(String(json.dumps({'id': states.ALARM, 'data': {'which_way': 'False', 'colour': [68, 88, 186]}})))
 rospy.spin()

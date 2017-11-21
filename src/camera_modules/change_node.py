@@ -58,9 +58,9 @@ def detect_change(frame):
     global MIN_CONTOUR_AREA
     global previous_contours
     global previous_frames_colour
-    
+
     original_image = frame.copy()
-    
+
     image = crop_to_table(frame)
 
     grey = convert_to_grey(image)
@@ -113,6 +113,17 @@ def detect_change(frame):
 
 
 def decide_which_way(contours, img):
+    """
+    Calculating the total area of the contours and assigning
+    them to either the left or the right of the image. It decides
+    whether the thief has come from the left or from the right.
+    :param contours: The detected changes as contours. This sets
+    the thief_went_right flag to True if the thief went right and
+    False if the thief went left.
+    :type contours: numpy.ndarray
+    :param img: The image onto which the contours have been selected
+    :type img: numpy.ndarray
+    """
     global thief_went_right
     if(len(contours) > 0):
         vertical, the_width = img.shape[:2]
@@ -134,17 +145,20 @@ def decide_which_way(contours, img):
 
 def detect_significant_change(frame):
     """
-    Using detect_change(), decides if there has been a significant change in recent history
+    Using detect_change(), decides if there has been a significant change in recent history.
+    Moreover, it identifies the colour of the changes detected.
     :param frame: The image to compare to the previous (the method will return False if it is the first call)
     :type frame: numpy.ndarray
     :return: True if there has been consistent changes recently, False if not (i.e. no need to alarm)
     :rtype: bool
+    :return: decided_colour as the most average (mode) RGB of the selected contours.
+    :rtype: tuple
     """
     global change_history
     global previous_contours
     global previous_frames_colour
     global CHANGE_SIGNIFICANT_CHANGE_THRESHOLD
-    
+
     # Find out if there is 'change' in the current frame
     changed = detect_change(frame)
     # Save if there was a change on this frame
@@ -178,9 +192,9 @@ def detect_significant_change(frame):
                 h = 3 * h / 4
                 if len(countour) > 0:
                     utils_detect.mode_it(previous_frame, r, g, b, x, y, x + w, y + h)
-        
+
         decided_colour = utils_detect.get_mode(r, g, b)
-        print 'Decided colour', decided_colour
+        # print 'Decided colour', decided_colour
 
     # If over half of the recent change detection is 'change detected', then we should return a significant change
     return alarm, decided_colour
