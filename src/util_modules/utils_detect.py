@@ -228,7 +228,7 @@ def detect_angle_to_person(image, rectangle, distro_size):
 
     centre = ((top_left + bottom_right) / 2)
 
-    fixed_angle = 1
+    fixed_angle = 5
 
     if centre <= mid_image:
         return -fixed_angle

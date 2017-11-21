@@ -13,7 +13,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
 from state_machine import states, state_util
-from util_modules.utils_detect import detect_closest_to_thief, init_distro, update_distro
+from util_modules.utils_detect import detect_closest_to_thief, init_distro, update_distro, detect_angle_to_person
 
 # --- array variables holding data on images current and previous ---
 depth_history = []  # history of depth images
@@ -134,9 +134,9 @@ def decide_on_thief_status():
                     where_do_i_think = distro.index(max(distro))
 
                 # Following code is for following people which is not completed
-                # angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, 300)))
+                # angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, 300)), distro_size)
                 # waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': 0.5}}))
-                
+
                 cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, 300), (255, 0, 0), 2)
             with global_lock:
                 cv2.imshow('actualimage', drawn_on_image)
@@ -144,11 +144,11 @@ def decide_on_thief_status():
 
             timeout += 1
 
-            if timeout == 500:
+            if timeout == 400:
                 print 'Timed out'
                 return
 
-            if counter == 200:
+            if counter == 150:
                 print 'Counter limit'
                 return
 
