@@ -107,9 +107,9 @@ def get_distance(img):
                             for i in range (0, max_height_cropped - min_height_cropped):
                                 for j in range (0, max_width_cropped - min_width_cropped):
                                     if mins[i][j][0] > last_image[i][j][0]:
-                                       mins[i][j][0] = last_image[i][j][0] - offset
+                                        mins[i][j][0] = last_image[i][j][0] - offset
                                     if maxes[i][j][0] < last_image[i][j][0]:
-                                       maxes[i][j][0] = last_image[i][j][0] + offset
+                                        maxes[i][j][0] = last_image[i][j][0] + offset
                     pub.publish(json.dumps({'id': actions.READY_TO_LOCK, 'data': state_data}))
 
             if alarm_count > alarm_count_threshold:
