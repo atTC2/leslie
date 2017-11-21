@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-import json
-
 import rospy
-from std_msgs.msg import String
-
 import beep_module
 import email_module
 import twitter_module
+import json
+from threading import Thread
+from std_msgs.msg import String
 from state_machine import states, state_util
 from util_modules.people_info import get_user_info
 
@@ -29,7 +28,7 @@ def manage_notification(notify_owner):
     data = get_user_info(notify_owner)
 
     # Beep
-    beep_module.notify()
+    Thread(target=beep_module.notify).start()
 
     # Twitter
     if 'twitter' in data:
@@ -40,9 +39,17 @@ def manage_notification(notify_owner):
 
 
 def state_callback(state_msg):
+    """
+    Called when a new state is published
+    :param state_msg: The new state information
+    :type state_msg: std_msgs.msg.String
+    """
     state_json = json.loads(state_msg.data)
     state_id = state_json['id']
     state_data = state_json['data']
+
+    # Update the beep module
+    beep_module.state_id = state_id
     
     if state_id != states.ALARM:
         return
