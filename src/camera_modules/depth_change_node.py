@@ -6,7 +6,7 @@ from cv_bridge import CvBridge, CvBridgeError   # pylint: disable=F0401
 from sensor_msgs.msg import Image
 import numpy as np
 import scipy.ndimage as ndimage
-from state_machine import states, actions
+from state_machine import states, actions, state_util
 from std_msgs.msg import String
 import json
 from util_modules import config_access
