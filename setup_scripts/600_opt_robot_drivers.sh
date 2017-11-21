@@ -1,8 +1,6 @@
 #!/bin/bash
 
-trap 'exit' ERR
-
-mkdir ~/Documents/
+mkdir -p ~/Documents/
 cd ~/Documents/
 svn checkout https://codex.cs.bham.ac.uk/svn/int-robot/course/socspioneer
 echo '
