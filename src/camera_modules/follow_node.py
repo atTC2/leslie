@@ -35,6 +35,8 @@ distro_lock = Lock()
 distro = []
 distro_size = 400
 
+colour_diff_threshold = 40
+
 locked_colour = None
 last_degree = None
 fov = 120.0
@@ -60,15 +62,15 @@ def detect_angle_to_person(image, rectangle):
     return angle
 
 
-def detect_people(image):
+def detect_people(unmodified_image):
     global latest_rekt_global, locked_colour
 
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
-    orig = image.copy()
+    drawn_on_image = unmodified_image.copy()
 
     # detect people in the image
-    (rects, weights) = hog.detectMultiScale(image, winStride=(6, 6),
+    (rects, weights) = hog.detectMultiScale(unmodified_image, winStride=(6, 6),
                                             padding=(32, 32), scale=1.05)
 
     '''
@@ -77,7 +79,7 @@ def detect_people(image):
     '''
     # draw the original bounding boxes
     # for (x, y, w, h) in rects:
-    #    cv2.rectangle(orig, (x, y), (x + w, y + h), (0, 0, 255), 2)
+    #    cv2.rectangle(drawn_on_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
     # detect_angle_to_person(image, ((x, y), (x+w, y + h)))
 
@@ -107,22 +109,23 @@ def detect_people(image):
                 new_xB = 399
             if new_yB >= 300:
                 new_yB = 299
-            cv2.rectangle(orig, (new_xA, new_yA), (new_xB, new_yB), (0, 255, 255), 2)
-            cv2.rectangle(orig, (xA, yA), (xB, yB), (0, 255, 0), 2)
-            utils_detect.make_histogram(orig, new_xA, new_yA, new_xB, new_yB, False)
-            avg_rect_colour = utils_detect.detect_avg_color2(orig, [new_xA, new_yA], [new_xB, new_yB])
-            colour_diff = utils_detect.euclidian_colour_diff(avg_rect_colour, locked_colour)
+            mode_colour = utils_detect.make_histogram(unmodified_image, new_xA, new_yA, new_xB, new_yB, False)
+            print 'mode', mode_colour
+            # avg_rect_colour = utils_detect.detect_avg_color2(drawn_on_image, [new_xA, new_yA], [new_xB, new_yB])
+            cv2.rectangle(drawn_on_image, (new_xA, new_yA), (new_xB, new_yB), (0, 255, 255), 2)
+            cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 255, 0), 2)
+            colour_diff = utils_detect.euclidian_colour_diff(mode_colour, locked_colour)
+            print 'diff', colour_diff
             index += 1
             if colour_diff < closest_colour_diff:
                 closest_colour_diff = colour_diff
                 closest_rekt = ((xA, yA), (xB, yB))
                 latest_rekt_global = closest_rekt
-                angle = detect_angle_to_person(orig, ((xA, yA), (xB, yB)))
+                angle = detect_angle_to_person(unmodified_image, ((xA, yA), (xB, yB)))
 
-        lost = False
-
-    return orig, angle, lost, closest_rekt
-
+        lost = closest_colour_diff > colour_diff_threshold
+    
+    return drawn_on_image, angle, lost, closest_rekt
 
 
 def get_distance(((xA, yA), (xB, yB))):
@@ -198,16 +201,15 @@ def decide_on_thief_status():
         global history_rgb, max_history, latest_rekt_global, locked_colour
         if (len(history_rgb) >= max_history):
             img = history_rgb[len(history_rgb) - 1]
-            data = None
 
             # Apply the method
-            data, angle, lost, largest_rekt = detect_people(img)
+            drawn_on_image, angle, lost, largest_rekt = detect_people(img)
 
             if largest_rekt is not None:
                 counter = 0
                 ((xA, yA), (xB, yB)) = largest_rekt
                 update_distro((xB - xA) / 2 + xA, 10)
-                cv2.rectangle(data, (xA, yA), (xB, yB), (0, 0, 255), 2)
+                cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
             else:
                 distance = get_distance(((0, 0), (400, 300)))
                 where_do_i_think = None
@@ -218,13 +220,9 @@ def decide_on_thief_status():
                 with distro_lock:
                     where_do_i_think = distro.index(max(distro))
 
-                cv2.rectangle(data, (where_do_i_think - 1, 0), (where_do_i_think + 1, 300), (255, 0, 0), 2)
+                cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, 300), (255, 0, 0), 2)
                 angle = detect_angle_to_person(img, ((where_do_i_think, 0), (where_do_i_think, 0)))
                 distance = 0
-
-                with global_lock:
-                    cv2.imshow('actualimage', data)
-                    cv2.waitKey(1)
 
                 angle = angle / 4
 
@@ -232,6 +230,10 @@ def decide_on_thief_status():
                 waypoint_pub.publish(
                    json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': distance}}))
 
+            with global_lock:
+                cv2.imshow('actualimage', drawn_on_image)
+                cv2.waitKey(1)
+            
             timeout += 1
 
             if timeout == 500:
@@ -412,5 +414,5 @@ pub = rospy.Publisher('/action', String, queue_size=1)
 rospy.Subscriber('/camera/depth/image_raw', Image, save_distance)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
 rospy.Subscriber('/odom', Odometry, read_odom, queue_size=1)
-#print callback(String(json.dumps({'id': states.ALARM, 'data': {'which_way': 'True', 'colour': [97, 117, 105]}})))
+# print callback(String(json.dumps({'id': states.ALARM, 'data': {'which_way': 'True', 'colour': [108, 134, 127]}})))
 rospy.spin()

@@ -76,9 +76,6 @@ def make_histogram(image, left, up, right, down, histogram):
             b[pixel[0]] += 1
             g[pixel[1]] += 1
             r[pixel[2]] += 1
-    #b = b[20:200]
-    #g = g[20:200]
-    #r = r[20:200]
 
     range_array = range(0, 256)
     if histogram:
@@ -87,7 +84,7 @@ def make_histogram(image, left, up, right, down, histogram):
         plt.plot(range_array, b, 'b', range_array, g, 'g', range_array, r, 'r')  # including h here is crucial
 
         plt.pause(0.0001)
-    return 20 + index_of_max(r), 20  + index_of_max(g), 20 + index_of_max(b)
+    return index_of_max(r), index_of_max(g), index_of_max(b)
 
 
 def index_of_max(arr):
