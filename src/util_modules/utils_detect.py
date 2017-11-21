@@ -176,7 +176,7 @@ def get_mode_colour(image, left, up, right, down, histogram=False):
     :rtype: tuple of int
     """
     r, g, b = make_r_g_b()
-    
+
     mode_it(image, r, g, b, left, up, right, down)
 
     range_array = range(0, 256)
@@ -314,8 +314,8 @@ def update_distro(mean, std_dev, distro, distro_size):
     :param distro_size:  size of distribution
     :type distro: float
     '''
-    minimum_value = 0.0000001
-    importance = 3
+    minimum_value = 0.00001
+    importance = 7
 
     other_distro = [normpdf(i, mean, std_dev) for i in range(0, distro_size)]
 
