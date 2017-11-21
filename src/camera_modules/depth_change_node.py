@@ -155,6 +155,7 @@ def callback(state_msg):
 # ROS node stuff
 rospy.init_node('change_node')
 pub = rospy.Publisher('/action', String, queue_size=10)
+rospy.Subscriber('/camera/depth/image_raw', Image, get_distance)
 rospy.Subscriber('/state', String, callback, queue_size=10)
 state_util.prime_state_callback_with_starting_state(callback)
 rospy.spin()
