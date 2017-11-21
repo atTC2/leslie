@@ -3,7 +3,7 @@
 import rospy
 
 import fake_pub_base
-from state_machine import actions, states
+from state_machine import actions
 
 
 rospy.init_node('fake_pub_ready_to_lock', anonymous=True)

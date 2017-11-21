@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "camera_index_table": 1,
     "camera_index_face": 0,
     "table_min_bgr_threshold": [100, 145, 190],
