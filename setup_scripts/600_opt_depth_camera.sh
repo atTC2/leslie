@@ -35,6 +35,7 @@ source setup.bash
 cd ..
 # Currently at catkin_ws
 sudo apt-get install -qq ros-indigo-cv-bridge libudev-dev ros-indigo-rgbd-launch -y
+sudo pip install imutils
 catkin_make
 roscd astra_camera && ./src/ros_astra_camera/scripts/create_udev_rules
 
