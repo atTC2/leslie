@@ -1,8 +1,8 @@
 import json
 import operator
-
 import rospy
 from std_msgs.msg import String
+from state_machine import state_util
 
 
 # Should not be accessed until after _block_until_operator_state.
@@ -26,6 +26,7 @@ def _state_callback(state_msg):
 
 
 rospy.Subscriber('/state', String, _state_callback, queue_size=10)
+state_util.prime_state_callback_with_starting_state(_state_callback)
 
 _PUB = rospy.Publisher('/action', String, queue_size=10)
 
