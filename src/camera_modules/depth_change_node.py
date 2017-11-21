@@ -104,7 +104,7 @@ def get_distance(img):
                             maxes = last_image.copy()
                             first_frame = False
                         else:
-                        # Find min and max values of deviations due to noise and add an offset.
+                            # Find min and max values of deviations due to noise and add an offset.
                             for i in range (0, max_height_cropped - min_height_cropped):
                                 for j in range (0, max_width_cropped - min_width_cropped):
                                     if mins[i][j][0] > last_image[i][j][0]:
