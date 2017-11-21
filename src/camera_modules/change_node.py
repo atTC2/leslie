@@ -28,6 +28,7 @@ if __name__ != '__main__':
 FRAME_QUEUE_SIZE = config_access.get_config(config_access.KEY_CHANGE_FRAME_QUEUE_SIZE)
 previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
 change_history = Queue(maxsize=FRAME_QUEUE_SIZE)
+previous_frames_colour = []
 previous_contours = []
 
 # Change detection parameters
@@ -42,12 +43,12 @@ state_data = None
 thief_went_right = True
 
 
-def detect_change(original_image):
+def detect_change(frame):
     """
     Detects change between the current image and the last.
     Some code inspired by https://gist.github.com/rrama/0bd1c29c8a1c1597b1eaf63847cecbf2
-    :param original_image: The image to compare to the previous (the method will return False if it is the first call)
-    :type original_image: numpy.ndarray
+    :param frame: The image to compare to the previous (the method will return False if it is the first call)
+    :type frame: numpy.ndarray
     :return: True is change was detected, False if not
     :rtype: bool
     """
@@ -56,8 +57,11 @@ def detect_change(original_image):
     global pub
     global MIN_CONTOUR_AREA
     global previous_contours
-
-    image = crop_to_table(original_image)
+    global previous_frames_colour
+    
+    original_image = frame.copy()
+    
+    image = crop_to_table(frame)
 
     grey = convert_to_grey(image)
 
@@ -71,7 +75,7 @@ def detect_change(original_image):
 
     contours = calculate_contours(grey, previous_frames.get())
 
-    decide_which_way(contours, original_image)
+    decide_which_way(contours, frame)
     # Has there been a change?
     changed = False
     saved_countour_list = []
@@ -91,16 +95,19 @@ def detect_change(original_image):
     previous_frames.put(grey)
 
     # Add timestamp
-    vertical, _ = original_image.shape[:2]
-    cv2.putText(original_image, str(datetime.utcnow()), (0, vertical), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 1)
+    vertical, _ = frame.shape[:2]
+    cv2.putText(frame, str(datetime.utcnow()), (0, vertical), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 1)
 
     # Save the image if there was change
     if changed:
-        save_frame(original_image)
+        save_frame(frame)
 
     previous_contours.append(saved_countour_list)
-    if(len(previous_contours) > FRAME_QUEUE_SIZE):
+    if len(previous_contours) > FRAME_QUEUE_SIZE:
         previous_contours = previous_contours[1:]
+    previous_frames_colour.append(original_image)
+    if len(previous_frames_colour) > FRAME_QUEUE_SIZE:
+        previous_frames_colour = previous_frames_colour[1:]
 
     return changed
 
@@ -125,20 +132,21 @@ def decide_which_way(contours, img):
         thief_went_right = all_right > all_left
 
 
-def detect_significant_change(original_image):
+def detect_significant_change(frame):
     """
     Using detect_change(), decides if there has been a significant change in recent history
-    :param original_image: The image to compare to the previous (the method will return False if it is the first call)
-    :type original_image: numpy.ndarray
+    :param frame: The image to compare to the previous (the method will return False if it is the first call)
+    :type frame: numpy.ndarray
     :return: True if there has been consistent changes recently, False if not (i.e. no need to alarm)
     :rtype: bool
     """
     global change_history
     global previous_contours
+    global previous_frames_colour
     global CHANGE_SIGNIFICANT_CHANGE_THRESHOLD
-
+    
     # Find out if there is 'change' in the current frame
-    changed = detect_change(original_image)
+    changed = detect_change(frame)
     # Save if there was a change on this frame
     change_history.put(changed)
     # We need to have at least the queue full before we do the rest of this
@@ -157,23 +165,22 @@ def detect_significant_change(original_image):
     alarm = change_history_detected_count > (FRAME_QUEUE_SIZE * CHANGE_SIGNIFICANT_CHANGE_THRESHOLD)
 
     decided_colour = None
-    if alarm == True:
-
-        avg_b = 0
-        avg_g = 0
-        avg_r = 0
-        total = 0
-        for countours in previous_contours:
+    if alarm and state_id == states.LOCKED_AND_WAITING:
+        r, g, b = utils_detect.make_r_g_b()
+        for i in range(0, len(previous_contours)):
+            countours = previous_contours[i]
+            previous_frame = previous_frames_colour[i]
             for countour in countours:
                 x, y, w, h = cv2.boundingRect(countour)
-                if(len(countour) > 0):
-                    b,g,r = utils_detect.make_histogram(original_image, x, y, x + w, y + h, False)
-                    avg_b += b
-                    avg_g += g
-                    avg_r += r
-                    total += 1
-        decided_colour = [avg_b/total, avg_g/total, avg_r/total]
-        print decided_colour
+                x += w / 4
+                y += h / 4
+                w = 3 * w / 4
+                h = 3 * h / 4
+                if len(countour) > 0:
+                    utils_detect.mode_it(previous_frame, r, g, b, x, y, x + w, y + h)
+        
+        decided_colour = utils_detect.get_mode(r, g, b)
+        print 'Decided colour', decided_colour
 
     # If over half of the recent change detection is 'change detected', then we should return a significant change
     return alarm, decided_colour
@@ -188,6 +195,7 @@ def reset(cap):
     global previous_frames
     global change_history
     global previous_contours
+    global previous_frames_colour
 
     # Release capture and destroy windows
     cap.release()
@@ -197,7 +205,8 @@ def reset(cap):
     change_util.crop_right = None
     previous_frames = Queue(maxsize=FRAME_QUEUE_SIZE)
     change_history = Queue(maxsize=FRAME_QUEUE_SIZE)
-    previous_contours = Queue(maxsize=FRAME_QUEUE_SIZE)
+    previous_contours = []
+    previous_frames_colour = []
 
     if change_util.video_writer is not None:
         change_util.video_writer.release()

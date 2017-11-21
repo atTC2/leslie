@@ -101,8 +101,62 @@ def euclidian_colour_diff(colour1, colour2):
     return math.sqrt(gdiff + bdiff + rdiff)
 
 
+def make_r_g_b():
+    """
+    Make RGB array counter thing.
+    :return: A tuple of arrays representing RGB value counts set at 0.
+    :rtype: tuple of int[]
+    """
+    return [0 for _ in range(0, 256)], [0 for _ in range(0, 256)], [0 for _ in range(0, 256)]
+
+
+def mode_it(image, r, g, b, left, up, right, down):
+    """
+    Adds to the RGB arrays the colours for the pixels in the image in the bounds.
+    :param image: The image
+    :param r: The R array
+    :param g: The G array
+    :param b: The B array
+    :param left: The left x value to crop
+    :param up: The top y value to crop
+    :param right: The right x value to crop
+    :param down: The bottom y value to crop
+    :type image: numpy.ndarray
+    :type r: int[]
+    :type g: int[]
+    :type b: int[]
+    :type left: int
+    :type up: int
+    :type right: int
+    :type down: int
+    :return: None
+    :rtype: None
+    """
+    for y in range(up, down):
+        for x in range(left, right):
+            pixel = image[y][x]
+            b[pixel[0]] += 1
+            g[pixel[1]] += 1
+            r[pixel[2]] += 1
+
+
+def get_mode(r, g, b):
+    """
+    Gets the mode RGB values from the RGB counts.
+    :param r: The R array
+    :param g: The G array
+    :param b: The B array
+    :type r: int[]
+    :type g: int[]
+    :type b: int[]
+    :return: The mode RGB values
+    :rtype: tuple of int
+    """
+    return index_of_max(r), index_of_max(g), index_of_max(b)
+
+
 def get_mode_colour(image, left, up, right, down, histogram=False):
-    '''
+    """
     For all the pixels in the rectangle, representing a person,
     for each component r,g,b in that pixel, tally their value for
     their respective component.
@@ -111,23 +165,19 @@ def get_mode_colour(image, left, up, right, down, histogram=False):
     :param image: the original image
     :type image: numpy.array
     :param left: bounding box top left x position
-    :type left: float
+    :type left: int
     :param up: bounding box top left y position
-    :type up: float
+    :type up: int
     :param right: bounding box bottom right x position
-    :type right: float
+    :type right: int
     :param down: bounding box bottom right y position
-    :type down: float
-    '''
-    b = [0 for _ in range(0, 256)]
-    g = [0 for _ in range(0, 256)]
-    r = [0 for _ in range(0, 256)]
-    for y in range(up, down):
-        for x in range(left, right):
-            pixel = image[y][x]
-            b[pixel[0]] += 1
-            g[pixel[1]] += 1
-            r[pixel[2]] += 1
+    :type down: int
+    :return: The mode RGB values
+    :rtype: tuple of int
+    """
+    r, g, b = make_r_g_b()
+    
+    mode_it(image, r, g, b, left, up, right, down)
 
     range_array = range(0, 256)
     if histogram:
@@ -136,7 +186,7 @@ def get_mode_colour(image, left, up, right, down, histogram=False):
         plt.plot(range_array, b, 'b', range_array, g, 'g', range_array, r, 'r')  # including h here is crucial
 
         plt.pause(0.0001)
-    return index_of_max(r), index_of_max(g), index_of_max(b)
+    return get_mode(r, g, b)
 
 
 def index_of_max(arr):
