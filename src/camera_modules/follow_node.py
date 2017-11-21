@@ -1,30 +1,22 @@
 #!/usr/bin/env python
 
-from imutils.object_detection import non_max_suppression
-import cv2
-import camera_node
-from geometry_msgs.msg import Twist
-from geometry_msgs.msg import Quaternion
-import numpy
-import imutils
 import json
-import cv2
-import copy
-import scipy.stats as stats
-import matplotlib.pyplot as plt
-from threading import Lock
-from sensor_msgs.msg import Image
-# import subprocess
-import rospy
 import math
-# from threading import Thread
-# from Queue import Queue
-# from datetime import datetime
+import numpy
+from cv_bridge import CvBridge
+from threading import Lock, Thread
+
+import cv2
+import imutils
+import matplotlib.pyplot as plt
+import rospy
+from geometry_msgs.msg import Twist
+from imutils.object_detection import non_max_suppression
+from sensor_msgs.msg import Image
 from std_msgs.msg import String
-from nav_msgs.msg import Odometry
-from state_machine import states, actions
-from cv_bridge import CvBridge, CvBridgeError
-from util_modules import utils_detect, utils_maths
+
+from state_machine import states, state_util
+from util_modules import utils_detect
 
 history = []
 history_rgb = []
@@ -44,31 +36,33 @@ fov = 120.0
 waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=10)
 odom_pub = rospy.Publisher('cmd_vel', Twist, queue_size=100)
 
+state_id = state_util.get_start_state()
+
 
 def detect_angle_to_person(image, rectangle):
     global distro_size, fov
-
+    
     top_left = rectangle[0][0]
     bottom_right = rectangle[1][0]
-    if(bottom_right >= distro_size):
+    if (bottom_right >= distro_size):
         bottom_right = distro_size - 1
-
+    
     mid_image = image.shape[1] / 2.0
-
+    
     centre = ((top_left + bottom_right) / 2)
-
+    
     angle = ((fov / 2.0) / mid_image) * (centre - mid_image)
-
+    
     return angle
 
 
 def detect_people(unmodified_image):
     global latest_rekt_global, locked_colour
-
+    
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
     drawn_on_image = unmodified_image.copy()
-
+    
     # detect people in the image
     (rects, weights) = hog.detectMultiScale(unmodified_image, winStride=(6, 6),
                                             padding=(16, 16), scale=1.05)
@@ -79,9 +73,9 @@ def detect_people(unmodified_image):
     # draw the original bounding boxes
     # for (x, y, w, h) in rects:
     #    cv2.rectangle(drawn_on_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
-
+    
     # detect_angle_to_person(image, ((x, y), (x+w, y + h)))
-
+    
     angle = 0
     lost = True
     largest_rekt = None
@@ -92,8 +86,8 @@ def detect_people(unmodified_image):
     if len(rects) != 0:
         rects = numpy.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
-
-        closest_colour_diff = 99999999 # some max number
+        
+        closest_colour_diff = 99999999  # some max number
         
         # draw the final bounding boxes
         for (xA, yA, xB, yB) in pick:
@@ -118,7 +112,7 @@ def detect_people(unmodified_image):
                 closest_rekt = ((xA, yA), (xB, yB))
                 latest_rekt_global = closest_rekt
                 angle = detect_angle_to_person(unmodified_image, ((xA, yA), (xB, yB)))
-
+        
         lost = closest_colour_diff > colour_diff_threshold
     
     return drawn_on_image, angle, lost, closest_rekt
@@ -131,23 +125,23 @@ def get_distance(((xA, yA), (xB, yB))):
     max_distance = 0
     avg_distance = 0
     for depth_image in saved_history:
-        avgX = (xB + xA)/2
-        avgY = (yB + yA)/7
-	x_diff_offset = (xB - xA) * 5 / 100
-	y_diff_offset = (yB - yA) * 15 / 100
-
-	xB = avgX + x_diff_offset
-	xA = avgX - x_diff_offset
-	yB = 3 * avgY + y_diff_offset
-	yA = 3 * avgY - y_diff_offset
+        avgX = (xB + xA) / 2
+        avgY = (yB + yA) / 7
+        x_diff_offset = (xB - xA) * 5 / 100
+        y_diff_offset = (yB - yA) * 15 / 100
+        
+        xB = avgX + x_diff_offset
+        xA = avgX - x_diff_offset
+        yB = 3 * avgY + y_diff_offset
+        yA = 3 * avgY - y_diff_offset
         depth_image = depth_image[yA:yB, xA:xB]
-
+        
         values = filter(lambda a: a != 0, depth_image.flatten())
         if (len(values) > 0):
             avg_distance = numpy.array(values).mean()
             min_distance = min(values)
             max_distance = max(values)
-
+    
     if avg_distance == 666666:
         return 0
     return avg_distance / 1000.0
@@ -155,7 +149,7 @@ def get_distance(((xA, yA), (xB, yB))):
 
 def save_distance(img):
     global max_history, history, global_lock
-
+    
     bridge = CvBridge()
     cv_image = bridge.imgmsg_to_cv2(img, "16UC1")
     cv_image = imutils.resize(cv_image, width=min(400, cv_image.shape[1]))
@@ -163,15 +157,15 @@ def save_distance(img):
     history.append(cv_image)
     if (len(history) > max_history):
         history = history[1:]
-
+    
     cv_image = cv_image.copy()
     cv_image = cv2.normalize(cv_image, cv_image, 0, 1, cv2.NORM_MINMAX)
     cv_image = cv2.cvtColor(cv_image, cv2.COLOR_GRAY2RGB)
-
+    
     if (latest_rekt_global is not None):
         ((xA, yA), (xB, yB)) = latest_rekt_global
         cv2.rectangle(cv_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
-
+    
     # print ('DEPTH:', cv_image.shape)
     with global_lock:
         cv2.imshow('depthimg', cv_image)
@@ -191,68 +185,49 @@ def rgb_color(img):
 def decide_on_thief_status():
     counter = 0
     timeout = 0
-    where_do_i_think = None
-
-    while True:
+    
+    while state_id == states.ALARM:
         global history_rgb, max_history, latest_rekt_global, locked_colour
         if (len(history_rgb) >= max_history):
             img = history_rgb[len(history_rgb) - 1]
-
+            
             # Apply the method
             drawn_on_image, angle, lost, largest_rekt = detect_people(img)
-
+            
             if largest_rekt is not None:
-                counter = 0
                 ((xA, yA), (xB, yB)) = largest_rekt
                 update_distro((xB - xA) / 2 + xA, 10)
                 cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
-            else:
-                distance = get_distance(((0, 0), (400, 300)))
-                where_do_i_think = None
             # Make frame
             if lost:
                 counter += 1
             else:
+                counter = 0
                 with distro_lock:
                     where_do_i_think = distro.index(max(distro))
-
-                cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, 300), (255, 0, 0), 2)
-                angle = detect_angle_to_person(img, ((where_do_i_think, 0), (where_do_i_think, 0)))
-                distance = 0
-
                 
-                angle = angle / 4
-
-                print 'Moving at angle:', angle
-                waypoint_pub.publish(
-                   json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': distance}}))
-
+                cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, 300), (255, 0, 0), 2)
             with global_lock:
                 cv2.imshow('actualimage', drawn_on_image)
                 cv2.waitKey(1)
             
             timeout += 1
-
+            
             if timeout == 500:
-                return True
-
-            if counter == 300:
-                return True
-
-
-def pos_to_angle(pos):
-    global distro_size, fov
-    notch = distro_size / fov
-
-    return int(fov * pos / distro_size)
+                print 'Timed out'
+                return
+            
+            if counter == 200:
+                print 'Counter limit'
+                return
 
 
 def angle_to_prob(angle):
     global distro_size, distro
     # print msg.twist.twist.linear.x
-
+    
     notch = distro_size / fov
-
+    
     if (angle == 0):
         return max_in_range(int(distro_size / 2), 20, distro, distro_size)
     if (angle > 0):
@@ -268,13 +243,13 @@ def max_in_range(mean, i, distro, distro_size):
         min_mean = 0
     if max_mean > (distro_size - 1):
         max_mean = distro_size - 1
-
+    
     max_value = -1
-
+    
     for j in range(min_mean, max_mean):
         if (max_value < distro[j]):
             max_value = distro[j]
-
+    
     # print 'max', max_value, 'index', i, 'mean', mean
     return max_value
 
@@ -300,27 +275,27 @@ def update_distro(mean, std_dev):
         global distro, distro_size
         minimum_value = 0.0000001
         importance = 3
-
+        
         other_distro = [normpdf(i, mean, std_dev) for i in range(0, distro_size)]
-
+        
         for i in range(0, 400):
             if (other_distro[i] < minimum_value):
                 other_distro[i] = minimum_value
-
+        
         other_distro = [float(i) / sum(other_distro) for i in other_distro]
-
+        
         for i in range(0, 400):
             distro[i] = importance * distro[i] + other_distro[i]
             if (distro[i] < minimum_value):
                 distro[i] = minimum_value
-
+        
         distro = [float(i) / sum(distro) for i in distro]
-
+        
         range_array = range(0, 400)
         plt.clf()
         plt.cla()
         plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')  # including h here is crucial
-
+        
         plt.pause(0.0001)
         return distro.index(max(distro))
 
@@ -331,66 +306,41 @@ def callback(state_msg):
     :param state_msg: The new state information
     :type state_msg: std_msgs.msg.String
     """
-    global locked_colour, waypoint_pub
-
+    global state_id
+    
     state = json.loads(state_msg.data)
-    action = {}
+    state_id = state['id']
     if state['id'] == states.ALARM:
-        print 'LOOKING FOR THIEF'
-        which_way = state['data']['which_way']
-        
-        if which_way or which_way == 'True':
-            print 'TO THE RIGHT'
-            waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': 90, 'distance': 0}}))
-        if not which_way or which_way == 'False':
-            print 'TO THE LEFT'
-            waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': -90, 'distance': 0}}))
-        locked_colour = state['data']['colour']
-        init_distro()
-        result = decide_on_thief_status()
-
-        if which_way or which_way == 'True':
-            print 'TO THE RIGHT'
-            waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': -90, 'distance': 0}}))
-        if not which_way or which_way == 'False':
-            print 'TO THE LEFT'
-            waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': 90, 'distance': 0}}))
-
-        print "result: ", result
-        if result:
-            print "caught "
-            pub.publish(json.dumps({'id': actions.CAUGHT_THIEF, 'data': state['data']}))
-        else:
-            print "lost "
-            pub.publish(json.dumps({'id': actions.LOST_THIEF, 'data': state['data']}))
-
-        init_distro()
-        result_of_chase = None
+        Thread(target=lookout_for_thief, args=[state]).start()
 
 
-def read_odom(msg):
-    global last_degree, distro, distro_size, fov
-    if len(distro) > 0:
-        with distro_lock:
-            minimum_value = min(distro)
-            quant = Quaternion()
-            quant.x = 0
-            quant.y = 0
-            quant.z = msg.pose.pose.orientation.z
-            quant.w = msg.pose.pose.orientation.w
-
-            if last_degree is None:
-                last_degree = math.degrees(utils_maths.yawFromQuaternion(quant))
-            else:
-                degree_new = math.degrees(utils_maths.yawFromQuaternion(quant))
-                if (degree_new != last_degree):
-                    degree_change = degree_new - last_degree
-                    last_degree = degree_new
-                    notch = distro_size / fov
-                    overall_change = degree_change * notch
-
-                    distro = shift_arr(distro, int(overall_change), minimum_value)
-                    distro = [float(i) / sum(distro) for i in distro]
+def lookout_for_thief(state):
+    global locked_colour, waypoint_pub
+    print 'LOOKING FOR THIEF'
+    which_way = state['data']['which_way']
+    
+    # Turn
+    if which_way or which_way == 'True':
+        print 'TO THE RIGHT'
+        waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': 90, 'distance': 0}}))
+    if not which_way or which_way == 'False':
+        print 'TO THE LEFT'
+        waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': -90, 'distance': 0}}))
+    
+    locked_colour = state['data']['colour']
+    init_distro()
+    decide_on_thief_status()
+    
+    if state_id != states.ALARM:
+        return
+    
+    # Turn back again
+    if which_way or which_way == 'True':
+        print 'TO THE RIGHT'
+        waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': -90, 'distance': 0}}))
+    if not which_way or which_way == 'False':
+        print 'TO THE LEFT'
+        waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': 90, 'distance': 0}}))
 
 
 def shift_arr(arr, by, default):
@@ -410,6 +360,5 @@ rospy.Subscriber('/state', String, callback, queue_size=1)
 pub = rospy.Publisher('/action', String, queue_size=1)
 rospy.Subscriber('/camera/depth/image_raw', Image, save_distance)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
-rospy.Subscriber('/odom', Odometry, read_odom, queue_size=1)
 # print callback(String(json.dumps({'id': states.ALARM, 'data': {'which_way': 'True', 'colour': [108, 134, 127]}})))
 rospy.spin()
