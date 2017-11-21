@@ -5,8 +5,11 @@
   <param name="delta" value="0.05" />
   <param name="configurations" value="$(find leslie)/resources/configurations/leslie.json" />
 
+<<<<<<< HEAD
   <arg name="rviz" default="true"/>
   <arg name="rqt_graph" default="false"/>
+=======
+>>>>>>> 26a8a6f3ca18d78abe28eb269a54d9c1593fcfa1
   <arg name="rviz_config_file" default="laser_and_particles.rviz"/>
   <arg name="map_file" default="$(find leslie)/resources/maps/newlowerground.yaml"/>
 
