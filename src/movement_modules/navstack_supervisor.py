@@ -53,6 +53,8 @@ table[2].position = Point(-0.04291536808, 0.29, 0)
 table[3].position = Point(1.05023245811, 2.81623911858, 0)
 table[4].position = Point(2.22847919464, 5.56012153625, 0)
 
+current_table_id = 0
+
 #  --- --- --- --- --- ---
 
 home_pose = Pose()
@@ -91,6 +93,7 @@ def state_callback(state_msg):
     # determine goal based on state
     if state_json['id'] == states.MOVE_TO_TABLE:
         goal.target_pose.pose = table[state_json['data']['tableID']]
+        current_table_id = state_json['data']['tableID']
     elif state_json['id'] == states.MOVE_TO_HOME:
         speech_engine.say('Going home')
         goal.target_pose.pose = home_pose
@@ -131,6 +134,8 @@ def go_to_goal(goal, state_json, attempt):
                 'data': {}
             }
             state_pub.publish(String(json.dumps(action_data)))
+        elif state_json['id'] == states.ALARM:
+            pass
     else:
         # Failed to reach goal
         # leaving relocalisation test code in, as may be useful if we test to compare the two methods
@@ -195,12 +200,20 @@ def current_pose_callback(data):
     current_pose = data.pose.pose # has covariance
 
 
+def go_back_to_latest_table(data):
+    global current_table_id
+    goal = MoveBaseGoal()
+    goal.target_pose.pose = table[current_table_id]
+    go_to_goal(goal, data, 0)
+
+
 # ROS node stuff
 rospy.init_node('navstack_supervisor')
 state_pub = rospy.Publisher('/action', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
 state_util.prime_state_callback_with_starting_state(state_callback)
 rospy.Subscriber('/waypoint', String, follow_callback, queue_size=10)
+rospy.Subscriber('/backhome', String, go_back_to_latest_table, queue_size=10)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
 rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, current_pose_callback, queue_size=10)
 rospy.spin()
