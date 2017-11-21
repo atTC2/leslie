@@ -3,7 +3,7 @@
 The following can be copied and pasted into the `"starting_state"` field in `leslie.json` to begin the system at various initial states.
 
 ## AT_HOME (default)
-```
+```json
 {
     "id": "AT_HOME",
     "data": {}
@@ -11,7 +11,7 @@ The following can be copied and pasted into the `"starting_state"` field in `les
 ```
 
 ## LISTENING\_FOR_TABLE
-```
+```json
 {
     "id": "LISTENING_FOR_TABLE",
     "data": {
@@ -21,7 +21,7 @@ The following can be copied and pasted into the `"starting_state"` field in `les
 ```
 
 ## MOVE\_TO_TABLE
-```
+```json
 {
     "id": "MOVE_TO_TABLE",
     "data": {
@@ -33,7 +33,7 @@ The following can be copied and pasted into the `"starting_state"` field in `les
 ```
 
 ## AT_TABLE
-```
+```json
 {
     "id": "AT_TABLE",
     "data": {
@@ -44,16 +44,39 @@ The following can be copied and pasted into the `"starting_state"` field in `les
 ```
 
 ## LOCKED\_AND_WAITING
-*Should not be used as an initial state! Use `AT_TABLE`*
+```json
+{
+    "id": "LOCKED_AND_WAITING",
+    "data": {
+        "current_owner": "Tom",
+        "friend": null
+    }
+}
+```
 
 ## ALARM
-*Should not be used as an initial state! Use `AT_TABLE`*
+```json
+{
+    "id": "ALARM",
+    "data": {
+        "current_owner": "Tom",
+        "friend": null
+    }
+}
+```
 
 ## ALARM_REPORT
-*Should not be used as an initial state! Use `AT_TABLE`*
+```json
+{
+    "id": "ALARM_REPORT",
+    "data": {
+        "notify_owner": "Tom"
+    }
+}
+```
 
 ## MOVE\_TO_HOME
-```
+```json
 {
     "id": "MOVE_TO_HOME",
     "data": {}
