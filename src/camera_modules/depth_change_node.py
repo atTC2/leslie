@@ -2,7 +2,7 @@
 
 import rospy
 import cv2
-from cv_bridge import CvBridge, CvBridgeError # pylint: disable=F0401
+from cv_bridge import CvBridge, CvBridgeError   # pylint: disable=F0401
 from sensor_msgs.msg import Image
 import numpy as np
 import scipy.ndimage as ndimage
@@ -37,10 +37,11 @@ maxes = []
 
 alarm = False
 running = False
-thief_went_right = True #True for right, False for left
+thief_went_right = True  # True for right, False for left
 
 state_id = None
 state_data = None
+
 
 def get_distance(img):
     """
@@ -55,10 +56,10 @@ def get_distance(img):
     global thief_went_right, alarm_count_threshold, threshold_frame
     global last_images, mins, maxes, alarm_count, ith_frame, alarm
 
-    #Check if we are still in the right state to keep running this loop.
+    # Check if we are still in the right state to keep running this loop.
     if running == True:
 
-        #Convert raw depth camera feed to 16 bit greyscale cv image.
+        # Convert raw depth camera feed to 16 bit greyscale cv image.
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(img, "16UC1")
 
@@ -75,43 +76,40 @@ def get_distance(img):
             if len(last_images) >= locking_frame_count:
                     count_left = 0
                     count_right = 0
-                    for i in range (0, max_height_cropped - min_height_cropped):
-                         for j in range (0, max_width_cropped - min_width_cropped):
-                             if(cv_image[i][j][0] > maxes[i][j][0] or
+                    for i in range(0, max_height_cropped - min_height_cropped):
+                        for j in range(0, max_width_cropped - min_width_cropped):
+                            if(cv_image[i][j][0] > maxes[i][j][0] or
                                 cv_image[i][j][0] < mins[i][j][0]):
-                                #Calculate what side the movement is on, for turning to follow thief.
+                                # Calculate what side the movement is on, for turning to follow thief.
                                 if j < (max_width_cropped - min_width_cropped)/2:
                                     count_left += 1
                                 else:
                                     count_right +=1
-                                #Create rectangle around movement
+                                # Create rectangle around movement
                                 cv2.rectangle(saved_full_image, (j, i), (j, i), (0, 0, 255), 2)
-                    if((count_left + count_right) > min_pixel_change_count):
+                    if(count_left + count_right > min_pixel_change_count):
                         alarm_count += 1
                     else:
                         alarm_count = 0
-                    if(count_left < count_right):
-                        thief_went_right = True
-                    else:
-                        thief_went_right = False
+                    thief_went_right = count_left < count_right
             else:
-                #Collect averages for motion detection from locking_frame_count frames.
+                # Collect averages for motion detection from locking_frame_count frames.
                 last_images.append(cv_image)
-                if(len(last_images) >= locking_frame_count):
+                if len(last_images) >= locking_frame_count:
                     first_frame = True
                     for last_image in last_images:
-                        #Set mins and maxes to first image.
+                        # Set mins and maxes to first image.
                         if first_frame:
                             mins = last_image.copy()
                             maxes = last_image.copy()
                             first_frame = False
                         else:
-                        #Find min and max values of deviations due to noise and add an offset.
+                        # Find min and max values of deviations due to noise and add an offset.
                             for i in range (0, max_height_cropped - min_height_cropped):
                                 for j in range (0, max_width_cropped - min_width_cropped):
-                                    if(mins[i][j][0] > last_image[i][j][0]):
+                                    if mins[i][j][0] > last_image[i][j][0]:
                                        mins[i][j][0] = last_image[i][j][0] - offset
-                                    if(maxes[i][j][0] < last_image[i][j][0]):
+                                    if maxes[i][j][0] < last_image[i][j][0]:
                                        maxes[i][j][0] = last_image[i][j][0] + offset
                     pub.publish(json.dumps({'id': actions.READY_TO_LOCK, 'data': state_data}))
 
@@ -122,11 +120,12 @@ def get_distance(img):
 
             ith_frame = 0
 
-            #Display cv2 image
-            cv2.imshow('img', saved_full_image)
+            # Display cv2 image
+            cv2.imshow('Table View', saved_full_image)
             cv2.waitKey(1)
         else:
-           ith_frame += 1
+            ith_frame += 1
+
 
 def callback(state_msg):
     """
@@ -140,7 +139,7 @@ def callback(state_msg):
     state_id = state_json['id']
     state_data = state_json['data']
 
-    if state_id == states.LOCKING:
+    if state_id == states.AT_TABLE:
         running = True
     elif state_id == states.LOCKED_AND_WAITING or state_id == states.ALARM:
         # Do nothing (continue running)
@@ -155,8 +154,7 @@ def callback(state_msg):
 
 # ROS node stuff
 rospy.init_node('change_node')
-rospy.Subscriber('/state', String, callback, queue_size=10)
 pub = rospy.Publisher('/action', String, queue_size=10)
-rospy.Subscriber('/camera/depth/image_raw', Image, get_distance)
-
+rospy.Subscriber('/state', String, callback, queue_size=10)
+state_util.prime_state_callback_with_starting_state(callback)
 rospy.spin()
