@@ -109,16 +109,21 @@ def go_to_goal(goal, state_json, attempt):
         if state_json['id'] == states.MOVE_TO_TABLE:
             # Ensure the correct table has been reached
             speech_engine.say("is this the table you meant?")
-            owner = state_json['data']['current_owner']
-            friend = state_json['data'].get('friend', None)
-            yes_no_listener.callback = partial(table_confirmed, owner, friend)
+            rospy.sleep(10)
+            # TODO - TESTING
+            go_home()
+            # owner = state_json['data']['current_owner']
+            # friend = state_json['data'].get('friend', None)
+            # yes_no_listener.callback = partial(table_confirmed, owner, friend)
         elif state_json['id'] == states.MOVE_TO_HOME:
             print 'successfully reached home'
-            action_data = {
-                'id': actions.ARRIVED,
-                'data': {}
-            }
-            state_pub.publish(String(json.dumps(action_data)))
+            # TODO - TESTING
+            go_to_random()
+            # action_data = {
+            #     'id': actions.ARRIVED,
+            #     'data': {}
+            # }
+            # state_pub.publish(String(json.dumps(action_data)))
     else:
         # Failed to reach goal
         # leaving relocalisation test code in, as may be useful if we test to compare the two methods
@@ -159,6 +164,32 @@ def goal_callback(goal):
     :type goal: PoseStamped
     """
     print str(goal)
+
+
+# TODO - TESTING
+def go_to_random():
+    import random
+    r = random.randint(0, 4)
+    if r in [2]:
+        go_to_random()
+    obj = {
+        'id': states.MOVE_TO_TABLE,
+        'data': {
+            "tableID": r,
+            "current_owner": "Tom",
+            "friend": None
+        }
+    }
+    state_callback(String(json.dumps(obj)))
+
+
+# TODO - TESTING
+def go_home():
+    obj = {
+        'id': states.MOVE_TO_HOME,
+        'data': {}
+    }
+    state_callback(String(json.dumps(obj)))
 
 
 # ROS node stuff

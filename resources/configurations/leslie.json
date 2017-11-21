@@ -25,7 +25,11 @@
     "min_width_cropped": 100,
     "max_width_cropped": 620,
     "starting_state": {
-        "id": "AT_HOME",
-        "data": {}
+        "id": "MOVE_TO_TABLE",
+        "data": {
+            "tableID": 0,
+            "current_owner": "Tom",
+            "friend": null
+        }
     }
 }
