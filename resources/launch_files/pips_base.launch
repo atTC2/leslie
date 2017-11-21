@@ -4,12 +4,13 @@
   <param name="linear_speed" value="2" />
   <param name="delta" value="0.05" />
   <param name="configurations" value="$(find leslie)/resources/configurations/leslie.json" />
-  
+
+  <arg name="use_depth_for_change_node" default="false"/>
   <arg name="rviz" default="true"/>
   <arg name="rqt_graph" default="false"/>
   <arg name="rviz_config_file" default="laser_and_particles.rviz"/>
   <arg name="map_file" default="$(find leslie)/resources/maps/newlowerground.yaml"/>
-  
+
   <arg name="sleep_multiplier" default="1"/>
   <arg name="sleep" value="$(find leslie)/resources/launch_prefixes/sleepy.sh $(arg sleep_multiplier)" />
 
@@ -27,6 +28,10 @@
   <include file="$(find leslie)/resources/launch_files/move_base.launch">
       <arg name="sleep_multiplier" value="$(arg sleep_multiplier)" />
   </include>
+  <!-- Depth camera files -->
+  <include file="$(find astra_launch)/launch/astra.launch" if="$(arg use_depth_for_change_node)" />
+  <include file="$(find usb_cam)/launch/usb_cam-test.launch" if="$(arg use_depth_for_change_node)" />
+
   <node name="navstack_supervisor" pkg="leslie" type="navstack_supervisor.py" output="screen" />
   <node name="facial_node" pkg="leslie" type="facial_node.py" output="screen"
         launch-prefix="$(arg sleep) 5" />
@@ -37,11 +42,15 @@
         launch-prefix="$(arg sleep) 6" />
   <node name="twitter_control" pkg="leslie" type="twitter_control.py" output="screen"
         launch-prefix="$(arg sleep) 6" />
+  <node name="depth_change_node" pkg="leslie" type="depth_change_node.py" output="screen"
+        if="$(arg use_depth_for_change_node)"
+        launch-prefix="$(arg sleep) 20" />
   <node name="change_node" pkg="leslie" type="change_node.py" output="screen"
+        unless="$(arg use_depth_for_change_node)"
         launch-prefix="$(arg sleep) 20" />
   <node name="notifications_manager" pkg="leslie" type="notifications_manager.py" output="screen"
         launch-prefix="$(arg sleep) 20" />
-  
+
   <!-- Run RQT Graph -->
   <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph" output="screen"
         if="$(arg rqt_graph)"

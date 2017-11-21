@@ -11,7 +11,7 @@ if [[ $EUID > 0 ]] ; then
 fi
 
 echo "Switching to ~/Documents to install there."
-mkdir ~/Documents/
+mkdir -p ~/Documents/
 cd ~/Documents/
 
 echo "Downloading driver zip."
