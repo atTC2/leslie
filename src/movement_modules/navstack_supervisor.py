@@ -170,7 +170,7 @@ def goal_callback(goal):
 def go_to_random():
     import random
     r = random.randint(0, 4)
-    if r in [2]:
+    if r in [0, 1, 2]:
         go_to_random()
     obj = {
         'id': states.MOVE_TO_TABLE,

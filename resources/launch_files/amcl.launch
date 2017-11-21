@@ -6,9 +6,9 @@
   
   <node name="amcl" pkg="amcl" type="amcl"
         launch-prefix="$(arg sleep) 3">
-    <param name="initial_pose_x"            value="-1.38991832733"/>
-    <param name="initial_pose_y"            value="-9.28993225098"/>
-    <param name="initial_pose_a"            value="2.63545"/>
+    <!--<param name="initial_pose_x"            value="-1.38991832733"/>-->
+    <!--<param name="initial_pose_y"            value="-9.28993225098"/>-->
+    <!--<param name="initial_pose_a"            value="2.63545"/>-->
     <!-- Starting pose right of floor
     <param name="initial_pose_x"            value="5.50601768494"/>
     <param name="initial_pose_y"            value="8.32301235199"/>
@@ -19,6 +19,11 @@
     <param name="initial_pose_y"            value="0.733837246895"/>
     <param name="initial_pose_a"            value="-0.4145157"/>
     -->
+    <!-- Starting from table 5 -->
+    <param name="initial_pose_x"            value="2.22847919464"/>
+    <param name="initial_pose_y"            value="5.56012153625"/>
+    <param name="initial_pose_a"            value="2.763"/>
+    
     
     
     <param name="min_particles"             value="500"/>

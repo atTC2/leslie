@@ -27,7 +27,7 @@
     "starting_state": {
         "id": "MOVE_TO_TABLE",
         "data": {
-            "tableID": 0,
+            "tableID": 4,
             "current_owner": "Tom",
             "friend": null
         }
