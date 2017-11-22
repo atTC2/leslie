@@ -45,9 +45,9 @@ for i in range(5):
     table.append(p)
 
 # positions are taken from rviz
-table[0].position = Point(-1.8060284138, -4.99175453186, 0)
+table[0].position = Point(-2, -4.8, 0)
 table[1].position = Point(-1.2, -2.0, 0)
-table[2].position = Point(-0.04291536808, 0.26, 0)
+table[2].position = Point(-0.04291536808, 0.29, 0)
 table[3].position = Point(1.05023245811, 2.81623911858, 0)
 table[4].position = Point(2.22847919464, 5.56012153625, 0)
 # table[4].orientation = Quaternion(0.0, 0.0, 0.087, -0.996)
@@ -178,7 +178,7 @@ def goal_callback(goal):
 def go_to_random():
     import random
     r = random.randint(0, 4)
-    if r in [1]:
+    if r in []:
         go_to_random()
     obj = {
         'id': states.MOVE_TO_TABLE,
