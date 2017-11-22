@@ -3,6 +3,7 @@
 import json
 import numpy
 import math
+import time
 from cv_bridge import CvBridge  # pylint: disable=F0401
 from threading import Lock, Thread
 import matplotlib.pyplot as plt
@@ -113,8 +114,8 @@ def decide_on_thief_status():
     global locked_colour
     global history_rgb, max_history, latest_rect_global, locked_colour
     global distro, distro_size
-    counter = 0
-    timeout = 0
+    counter_time = time.time()
+    start_time = time.time()
 
     while state_id == states.ALARM:
         if len(history_rgb) >= max_history:
@@ -129,10 +130,8 @@ def decide_on_thief_status():
                     update_distro((xB - xA) / 2 + xA, 10)
                 cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
             # Make frame
-            if lost:
-                counter += 1
-            else:
-                counter = 0
+            if not lost:
+                counter_time = time.time()
                 with distro_lock:
                     where_do_i_think = distro.index(max(distro))
 
@@ -145,14 +144,13 @@ def decide_on_thief_status():
             with global_lock:
                 cv2.imshow('actualimage', drawn_on_image)
                 cv2.waitKey(1)
-
-            timeout += 1
-
-            if timeout == 400:
+            
+            if time.time() - start_time > 160:
                 print 'Timed out'
                 return
-
-            if counter == 150:
+            
+            print 'time', time.time() - counter_time
+            if time.time() - counter_time > 40:
                 print 'Counter limit'
                 return
 
@@ -290,6 +288,6 @@ backhome_pub = rospy.Publisher('/backhome', String, queue_size=1)
 waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=1)
 rospy.Subscriber('/camera/depth/image_raw', Image, save_distance, queue_size=1)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
-rospy.Subscriber('/odom', Odometry, read_odom, queue_size=10)
+rospy.Subscriber('/odom', Odometry, read_odom, queue_size=1)
 state_util.prime_state_callback_with_starting_state(callback)
 rospy.spin()
