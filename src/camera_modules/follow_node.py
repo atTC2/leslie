@@ -2,17 +2,22 @@
 
 import json
 import numpy
-from cv_bridge import CvBridge
+import math
+from cv_bridge import CvBridge  # pylint: disable=F0401
 from threading import Lock, Thread
+import matplotlib.pyplot as plt
 
 import cv2
 import imutils
 import rospy
+from geometry_msgs.msg import Quaternion
+from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
 from state_machine import states, state_util
-from util_modules.utils_detect import detect_closest_to_thief, init_distro, update_distro, detect_angle_to_person
+from util_modules import utils_maths, utils_detect
+from util_modules.utils_detect import detect_closest_to_thief, init_distro, detect_angle_to_person, normpdf
 
 # --- array variables holding data on images current and previous ---
 depth_history = []  # history of depth images
@@ -33,7 +38,7 @@ distro = []  # distribution representing `belief`
 distro_size = 400  # size of distribution
 # --------------------------------------------------
 
-last_degree = None  # the angle calculated by actino model
+last_degree = None  # the angle calculated by action model
 
 state_id = state_util.get_start_state()
 
@@ -121,7 +126,7 @@ def decide_on_thief_status():
             if closest_rect is not None:
                 ((xA, yA), (xB, yB)) = closest_rect
                 with distro_lock:
-                    update_distro((xB - xA) / 2 + xA, 10, distro, distro_size)
+                    update_distro((xB - xA) / 2 + xA, 10)
                 cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
             # Make frame
             if lost:
@@ -150,6 +155,89 @@ def decide_on_thief_status():
             if counter == 150:
                 print 'Counter limit'
                 return
+
+
+def update_distro(mean, std_dev):
+    """
+    Updates a probability distribution by creating a new distribution
+    based on the passed in values of the mean (angle as pixel index) and
+    the standard deviation,
+    then add that newly created distribution to the old one
+    multiplied by weighting. Afterwards normalise etc.
+
+    :param mean: value to create distribution around,
+    usually middle pixel of boudning box of person
+    :param type: float
+    :param std_dev: standard deviation for creating distribution
+    :param type: float
+    :param distro: distribution to update
+    :type distro: float[]
+    :param distro_size:  size of distribution
+    :type distro_size: int
+    """
+    global distro, distro_size
+    minimum_value = 0.00001
+    importance = 7
+
+    other_distro = [normpdf(i, mean, std_dev) for i in range(0, distro_size)]
+
+    for i in range(0, 400):
+        if other_distro[i] < minimum_value:
+            other_distro[i] = minimum_value
+
+    other_distro = [float(i) / sum(other_distro) for i in other_distro]
+
+    for i in range(0, 400):
+        distro[i] = importance * distro[i] + other_distro[i]
+        if distro[i] < minimum_value:
+            distro[i] = minimum_value
+
+    distro = [float(i) / sum(distro) for i in distro]
+
+    range_array = range(0, 400)
+    plt.figure(100)
+    plt.clf()
+    plt.cla()
+    plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')
+
+    plt.pause(0.0001)
+    return distro.index(max(distro))
+
+
+def read_odom(msg):
+    global last_degree, distro, distro_size
+    if len(distro) > 0:
+        with distro_lock:
+            minimum_value = min(distro)
+            quant = Quaternion()
+            quant.x = 0
+            quant.y = 0
+            quant.z = msg.pose.pose.orientation.z
+            quant.w = msg.pose.pose.orientation.w
+
+            if last_degree is None:
+                last_degree = math.degrees(utils_maths.yawFromQuaternion(quant))
+            else:
+                degree_new = math.degrees(utils_maths.yawFromQuaternion(quant))
+                if degree_new != last_degree:
+                    degree_change = degree_new - last_degree
+                    last_degree = degree_new
+                    notch = distro_size / utils_detect.fov
+                    overall_change = degree_change * notch
+
+                    distro = shift_arr(distro, int(overall_change), minimum_value)
+                    distro = [float(i) / sum(distro) for i in distro]
+
+
+def shift_arr(arr, by, default):
+    if by < 0:
+        arr.reverse()
+        res = shift_arr(arr, -by, default)
+        res.reverse()
+        return res
+    new_arr = [default for _ in range(0, by)]
+    new_arr.extend(arr[0:distro_size - by])
+    return new_arr
 
 
 def callback(state_msg):
@@ -206,5 +294,6 @@ backhome_pub = rospy.Publisher('/backhome', String, queue_size=1)
 waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=1)
 rospy.Subscriber('/camera/depth/image_raw', Image, save_distance, queue_size=1)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
+rospy.Subscriber('/odom', Odometry, read_odom, queue_size=10)
 state_util.prime_state_callback_with_starting_state(callback)
 rospy.spin()

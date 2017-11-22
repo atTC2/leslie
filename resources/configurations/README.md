@@ -60,7 +60,9 @@ The following can be copied and pasted into the `"starting_state"` field in `les
     "id": "ALARM",
     "data": {
         "current_owner": "Tom",
-        "friend": null
+        "friend": null,
+        "which_way": true,
+        "colour": [121, 74, 61]
     }
 }
 ```
