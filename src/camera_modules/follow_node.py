@@ -167,13 +167,9 @@ def update_distro(mean, std_dev):
 
     :param mean: value to create distribution around,
     usually middle pixel of boudning box of person
-    :param type: float
+    :type mean: float
     :param std_dev: standard deviation for creating distribution
-    :param type: float
-    :param distro: distribution to update
-    :type distro: float[]
-    :param distro_size:  size of distribution
-    :type distro_size: int
+    :type std_dev: float
     """
     global distro, distro_size
     minimum_value = 0.00001
