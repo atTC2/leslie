@@ -5,7 +5,7 @@
   <param name="delta" value="0.05" />
   <param name="configurations" value="$(find leslie)/resources/configurations/leslie.json" />
 
-  <arg name="follow_people" default="true"/>
+  <arg name="follow_people" default="false"/>
   <arg name="use_depth_for_change_node" default="false"/>
   <arg name="rviz" default="true"/>
   <arg name="rqt_graph" default="false"/>

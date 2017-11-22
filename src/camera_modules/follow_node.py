@@ -46,6 +46,7 @@ state_id = state_util.get_start_state()
 chase = True
 figure_counter = 1
 
+
 def save_distance(img):
     """
     Saves the depth image to history.
