@@ -39,6 +39,7 @@ waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=10)
 
 state_id = state_util.get_start_state()
 
+chase = False
 
 def save_distance(img):
     """
@@ -132,8 +133,9 @@ def decide_on_thief_status():
                     where_do_i_think = distro.index(max(distro))
 
                 # Following code is for following people which is not completed
-                # angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, 300)), distro_size)
-                # waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': 0.5}}))
+                if chase:
+                    angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, 300)), distro_size)
+                    waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': 0.5}}))
 
                 cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, 300), (255, 0, 0), 2)
             with global_lock:
