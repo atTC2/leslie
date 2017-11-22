@@ -43,8 +43,8 @@ last_degree = None  # the angle calculated by action model
 
 state_id = state_util.get_start_state()
 
-chase = False
-
+chase = True
+figure_counter = 1
 
 def save_distance(img):
     """
@@ -113,7 +113,7 @@ def decide_on_thief_status():
     """
     global locked_colour
     global history_rgb, max_history, latest_rect_global, locked_colour
-    global distro, distro_size
+    global distro, distro_size, figure_counter
     counter_time = time.time()
     start_time = time.time()
 
@@ -122,7 +122,7 @@ def decide_on_thief_status():
             img = history_rgb[len(history_rgb) - 1]
 
             # Apply the method
-            drawn_on_image, angle, lost, closest_rect, latest_rect = detect_closest_to_thief(img, locked_colour, distro_size)
+            drawn_on_image, angle, lost, closest_rect, latest_rect = detect_closest_to_thief(img, locked_colour, distro_size, figure_counter)
             latest_rect_global = latest_rect
             if closest_rect is not None:
                 ((xA, yA), (xB, yB)) = closest_rect
@@ -144,12 +144,12 @@ def decide_on_thief_status():
             with global_lock:
                 cv2.imshow('actualimage', drawn_on_image)
                 cv2.waitKey(1)
-            
+
             # print 'time1', time.time() - start_time
             if time.time() - start_time > 50:
                 print 'Timed out'
                 return
-            
+
             # print 'time2', time.time() - counter_time
             if time.time() - counter_time > 22:
                 print 'Counter limit'
@@ -170,7 +170,7 @@ def update_distro(mean, std_dev):
     :param std_dev: standard deviation for creating distribution
     :type std_dev: float
     """
-    global distro, distro_size
+    global distro, distro_size, figure_counter
     minimum_value = 0.00001
     importance = 7
 
@@ -190,7 +190,7 @@ def update_distro(mean, std_dev):
     distro = [float(i) / sum(distro) for i in distro]
 
     range_array = range(0, 400)
-    plt.figure(100)
+    plt.figure(figure_counter)
     plt.clf()
     plt.cla()
     plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')
@@ -260,7 +260,7 @@ def lookout_for_thief(state):
     :param state: The full state data
     :type state: dict
     """
-    global locked_colour, waypoint_pub, distro, distro_size
+    global locked_colour, waypoint_pub, distro, distro_size, figure_counter
     print 'LOOKING FOR THIEF'
     which_way = state['data']['which_way']
 
@@ -274,6 +274,11 @@ def lookout_for_thief(state):
     with distro_lock:
         distro = init_distro(distro_size)
     decide_on_thief_status()
+
+    plt.close(figure_counter)
+    plt.close(figure_counter + 1)
+
+    figure_counter += 2
 
     if state_id != states.ALARM:
         return

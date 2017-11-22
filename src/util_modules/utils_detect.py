@@ -9,7 +9,7 @@ colour_diff_threshold = 45
 fov = 120.0  # camera field of view
 
 
-def detect_closest_to_thief(unmodified_image, locked_colour, distro_size):
+def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure_counter):
     """
     Given an image, detect if there are people inside it.
     If there are people in the image, return the angle and the rectangle
@@ -66,7 +66,7 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size):
                 new_yB = 299
 
             mode_colour = get_mode_colour(unmodified_image,
-                                          new_xA, new_yA, new_xB, new_yB, True)
+                                          new_xA, new_yA, new_xB, new_yB, True, figure_counter)
             print 'mode', mode_colour
             cv2.rectangle(drawn_on_image, (new_xA, new_yA), (new_xB, new_yB), (0, 255, 255), 2)
             cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 255, 0), 2)
@@ -156,7 +156,7 @@ def get_mode(r, g, b):
     return index_of_max(r), index_of_max(g), index_of_max(b)
 
 
-def get_mode_colour(image, left, up, right, down, histogram=False):
+def get_mode_colour(image, left, up, right, down, histogram, figure_counter):
     """
     For all the pixels in the rectangle, representing a person,
     for each component r,g,b in that pixel, tally their value for
@@ -184,7 +184,7 @@ def get_mode_colour(image, left, up, right, down, histogram=False):
 
     range_array = range(0, 256)
     if histogram:
-        plt.figure(200)
+        plt.figure(figure_counter + 1)
         plt.clf()
         plt.cla()
         plt.plot(range_array, b, 'b', range_array, g, 'g', range_array, r, 'r')
