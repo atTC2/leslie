@@ -1,12 +1,10 @@
+import rospy
 import json
 from datetime import datetime
 from functools import partial
 from os.path import getctime
 from sys import stderr
-
-import rospy
 from std_msgs.msg import String
-
 from interaction_modules.email_util import create_email, send_email, attach_body, attach_file
 from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import actions

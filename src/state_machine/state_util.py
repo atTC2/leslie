@@ -1,5 +1,6 @@
 import json
 
+import rospy
 from std_msgs.msg import String
 
 from util_modules import config_access
@@ -31,5 +32,9 @@ def prime_state_callback_with_starting_state(state_callback):
     :param state_callback: The callback to pass the message to.
     :type state_callback: (String) -> T
     """
+    # You've probably just created Publishers,
+    # Publishers can't be immediately published to, so sleep just in case.
+    rospy.sleep(5)
+    
     state_obj = config_access.get_config(config_access.KEY_STARTING_STATE)
     send_state_obj_to_state_callback(state_callback, state_obj)

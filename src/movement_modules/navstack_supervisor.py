@@ -5,13 +5,14 @@ from functools import partial
 
 import actionlib
 import rospy
-from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
+from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped, PoseWithCovarianceStamped
 from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
 from nav_msgs.srv import GetMap
 from std_msgs.msg import String
 # FOR TESTING: If we're trying relocalisation if we cannot reach the goal
 # from std_srvs.srv import Empty
 
+from util_modules import utils_maths
 from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import states, actions, state_util
 from util_modules import speech_engine
@@ -51,6 +52,8 @@ table[2].position = Point(-0.04291536808, 0.29, 0)
 table[3].position = Point(1.05023245811, 2.81623911858, 0)
 table[4].position = Point(2.22847919464, 5.56012153625, 0)
 
+current_table_id = 0
+
 #  --- --- --- --- --- ---
 
 home_pose = Pose()
@@ -69,6 +72,9 @@ client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
 yes_no_listener = YesNoListener()
 
+goal_handler = None
+current_pose = None
+
 
 def state_callback(state_msg):
     """
@@ -80,12 +86,13 @@ def state_callback(state_msg):
     :param state_msg: The current state of the robot's State Machine and data about table if applicable
     :type state_msg: std_msgs.msg.String
     """
-    global home_pose, client
+    global home_pose, client, current_table_id
     state_json = json.loads(state_msg.data)
     goal = MoveBaseGoal()
     # determine goal based on state
     if state_json['id'] == states.MOVE_TO_TABLE:
         goal.target_pose.pose = table[state_json['data']['tableID']]
+        current_table_id = state_json['data']['tableID']
     elif state_json['id'] == states.MOVE_TO_HOME:
         speech_engine.say('Going home')
         goal.target_pose.pose = home_pose
@@ -103,7 +110,7 @@ def go_to_goal(goal, state_json, attempt):
     :param state_json: The state JSON (containing current state information)
     :param attempt: The attempt number
     :type goal: MoveBaseGoal
-    :type state_json: object
+    :type state_json: dict
     :type attempt: int
     """
     client.wait_for_server()  # blocks indefinitely
@@ -126,6 +133,8 @@ def go_to_goal(goal, state_json, attempt):
                 'data': {}
             }
             state_pub.publish(String(json.dumps(action_data)))
+        elif state_json['id'] == states.ALARM:
+            pass
     else:
         # Failed to reach goal
         # leaving relocalisation test code in, as may be useful if we test to compare the two methods
@@ -168,10 +177,61 @@ def goal_callback(goal):
     print str(goal)
 
 
+def follow_callback(data):
+    """
+    Set a new goal for the robot when following/chasing a person.
+    Needs to have an ID of FOLLOW_PERP, an angle and a distance.
+    :param data: The message containing the angle and distance for the new goal
+    :type data: String
+    """
+    global goal_handler, current_pose
+    state_json = json.loads(data.data)
+    print "FOLLOW_CALLBACK", data
+    if state_json['id'] != 'FOLLOW_PERP':
+        return
+
+    state_data = state_json['data']
+    # sends a goal to get robot to turn 90 left or right
+    angle = state_data['angle']
+    dist = state_data['distance']
+    goal_pose = utils_maths.new_point(current_pose, angle, dist)
+
+    if goal_handler is not None:
+        goal_handler.cancel()
+    goal_handler = client.send_goal(goal_pose)
+
+
+def current_pose_callback(data):
+    """
+    Return the current pose of the robot.
+    :param data: The message passed from AMCL
+    :type data: PoseWithCovarianceStamped
+    """
+    global current_pose
+    current_pose = data.pose.pose  # has covariance
+
+
+def go_back_to_latest_table(data):
+    """
+    After chasing a thief, the robot should return
+    to the latest table. The current_table_id is set
+    when called state_callback with the tableID parameter.
+    :param data: The message passed from the publisher through the subscriber
+    :type data: String
+    """
+    global current_table_id
+    goal = MoveBaseGoal()
+    goal.target_pose.pose = table[current_table_id]
+    go_to_goal(goal, json.loads(data.data), 0)
+
+
 # ROS node stuff
 rospy.init_node('navstack_supervisor')
 state_pub = rospy.Publisher('/action', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
 state_util.prime_state_callback_with_starting_state(state_callback)
+rospy.Subscriber('/waypoint', String, follow_callback, queue_size=1)
+rospy.Subscriber('/backhome', String, go_back_to_latest_table, queue_size=1)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
+rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, current_pose_callback, queue_size=10)
 rospy.spin()

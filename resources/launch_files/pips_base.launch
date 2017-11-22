@@ -5,6 +5,7 @@
   <param name="delta" value="0.05" />
   <param name="configurations" value="$(find leslie)/resources/configurations/leslie.json" />
 
+  <arg name="follow_people" default="false"/>
   <arg name="use_depth_for_change_node" default="false"/>
   <arg name="rviz" default="true"/>
   <arg name="rqt_graph" default="false"/>
@@ -30,7 +31,9 @@
   </include>
   <!-- Depth camera files -->
   <include file="$(find astra_launch)/launch/astra.launch" if="$(arg use_depth_for_change_node)" />
+  <!-- USB Cam should only be used if one of the following is true -->
   <include file="$(find usb_cam)/launch/usb_cam-test.launch" if="$(arg use_depth_for_change_node)" />
+  <include file="$(find usb_cam)/launch/usb_cam-test.launch" if="$(arg follow_people)" />
 
   <node name="navstack_supervisor" pkg="leslie" type="navstack_supervisor.py" output="screen" />
   <node name="facial_node" pkg="leslie" type="facial_node.py" output="screen"
@@ -49,6 +52,9 @@
         unless="$(arg use_depth_for_change_node)"
         launch-prefix="$(arg sleep) 20" />
   <node name="notifications_manager" pkg="leslie" type="notifications_manager.py" output="screen"
+        launch-prefix="$(arg sleep) 20" />
+  <node name="follow_node" pkg="leslie" type="follow_node.py" output="screen"
+        if="$(arg follow_people)"
         launch-prefix="$(arg sleep) 20" />
 
   <!-- Run RQT Graph -->

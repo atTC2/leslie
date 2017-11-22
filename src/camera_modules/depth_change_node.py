@@ -2,7 +2,7 @@
 
 import rospy
 import cv2
-from cv_bridge import CvBridge   # pylint: disable=F0401
+from cv_bridge import CvBridge  # pylint: disable=F0401
 from sensor_msgs.msg import Image
 import numpy as np
 import scipy.ndimage as ndimage
