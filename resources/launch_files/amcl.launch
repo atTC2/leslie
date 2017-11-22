@@ -6,23 +6,24 @@
   
   <node name="amcl" pkg="amcl" type="amcl"
         launch-prefix="$(arg sleep) 3">
-    <!--<param name="initial_pose_x"            value="-1.38991832733"/>-->
-    <!--<param name="initial_pose_y"            value="-9.28993225098"/>-->
-    <!--<param name="initial_pose_a"            value="2.63545"/>-->
+    <param name="initial_pose_x"            value="-1.5"/>
+    <param name="initial_pose_y"            value="-9.0"/>
+    <param name="initial_pose_a"            value="2.63545"/>
     <!-- Starting pose right of floor
     <param name="initial_pose_x"            value="5.50601768494"/>
     <param name="initial_pose_y"            value="8.32301235199"/>
     <param name="initial_pose_a"            value="2.63545"/>
     -->
-    <!-- Starting pose middle of floor, next to bins
-    <param name="initial_pose_x"            value="-2.20325613022"/>
-    <param name="initial_pose_y"            value="0.733837246895"/>
-    <param name="initial_pose_a"            value="-0.4145157"/>
-    -->
+
+    <!-- Starting from bins in the middle -->
+    <!--<param name="initial_pose_x"            value="-2.20325613022"/>-->
+    <!--<param name="initial_pose_y"            value="0.733837246895"/>-->
+    <!--<param name="initial_pose_a"            value="-0.4145157"/>-->
+
     <!-- Starting from table 5 -->
-    <param name="initial_pose_x"            value="2.22847919464"/>
-    <param name="initial_pose_y"            value="5.56012153625"/>
-    <param name="initial_pose_a"            value="2.763"/>
+    <!--<param name="initial_pose_x"            value="2.22847919464"/>-->
+    <!--<param name="initial_pose_y"            value="5.56012153625"/>-->
+    <!--<param name="initial_pose_a"            value="2.763"/>-->
     
     
     

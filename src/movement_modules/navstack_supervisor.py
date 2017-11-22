@@ -37,7 +37,7 @@ map_resolution = meta_data.resolution
 #  --- Create the Pose for leslie at each table
 
 #  The orientation for leslie to face the table, taken from Rviz
-table_orientation = Quaternion(0.0, 0.0, 0.0, 1.0)
+table_orientation = Quaternion(0.0, 0.0, 0.087, -0.996)
 table = []
 for i in range(5):
     p = Pose()
@@ -47,10 +47,10 @@ for i in range(5):
 # positions are taken from rviz
 table[0].position = Point(-1.8060284138, -4.99175453186, 0)
 table[1].position = Point(-1.2, -2.0, 0)
-table[2].position = Point(-0.04291536808, 0.249539896846, 0)
+table[2].position = Point(-0.04291536808, 0.26, 0)
 table[3].position = Point(1.05023245811, 2.81623911858, 0)
 table[4].position = Point(2.22847919464, 5.56012153625, 0)
-table[4].orientation = Quaternion(0.0, 0.0, 0.996, 0.087)
+# table[4].orientation = Quaternion(0.0, 0.0, 0.087, -0.996)
 
 #  --- --- --- --- --- ---
 
@@ -178,7 +178,7 @@ def goal_callback(goal):
 def go_to_random():
     import random
     r = random.randint(0, 4)
-    if r in [0, 1, 2]:
+    if r in [1]:
         go_to_random()
     obj = {
         'id': states.MOVE_TO_TABLE,
