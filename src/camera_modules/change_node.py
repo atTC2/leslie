@@ -5,7 +5,6 @@ import cv2
 import os
 import subprocess
 import rospy
-import numpy as np
 from threading import Thread
 from Queue import Queue
 from datetime import datetime
@@ -13,9 +12,7 @@ from std_msgs.msg import String
 from state_machine import states, actions, state_util
 from camera_modules import change_util
 from camera_modules.change_util import crop_to_table, convert_to_grey, calculate_contours, save_frame, draw_changes
-from util_modules import config_access
-from util_modules import utils_detect
-from util_modules import config_access, speech_engine
+from util_modules import utils_detect, config_access, speech_engine
 from interaction_modules.reporting_modules import email_report
 
 if __name__ != '__main__':
@@ -75,19 +72,21 @@ def detect_change(frame):
 
     contours = calculate_contours(grey, previous_frames.get())
 
-    decide_which_way(contours, frame)
     # Has there been a change?
     changed = False
-    saved_countour_list = []
+    saved_contour_list = []
     for contour in contours:
         # If the contour is too small, ignore it
         if cv2.contourArea(contour) < MIN_CONTOUR_AREA:
             continue
         else:
-            saved_countour_list.append(contour)
+            saved_contour_list.append(contour)
             changed = True
             break
 
+    if changed:
+        decide_which_way(contours, frame)
+        
     # Draw the changes
     draw_changes(image, contours)
 
@@ -102,7 +101,7 @@ def detect_change(frame):
     if changed:
         save_frame(frame)
 
-    previous_contours.append(saved_countour_list)
+    previous_contours.append(saved_contour_list)
     if len(previous_contours) > FRAME_QUEUE_SIZE:
         previous_contours = previous_contours[1:]
     previous_frames_colour.append(original_image)
@@ -125,7 +124,7 @@ def decide_which_way(contours, img):
     :type img: numpy.ndarray
     """
     global thief_went_right
-    if(len(contours) > 0):
+    if len(contours) > 0:
         vertical, the_width = img.shape[:2]
         all_left = 0
         all_right = 0
@@ -134,7 +133,7 @@ def decide_which_way(contours, img):
             area = w * h
             if x + w <= (the_width/2):
                 all_left += area
-            if x < (the_width/2) and x+w > (the_width/2):
+            if x < (the_width/2) < x+w:
                 all_left += area/(the_width/2 - x)
                 all_right += area/(x + w - the_width/2)
             if x + w >= (the_width/2):
@@ -182,9 +181,9 @@ def detect_significant_change(frame):
     if alarm and state_id == states.LOCKED_AND_WAITING:
         r, g, b = utils_detect.make_r_g_b()
         for i in range(0, len(previous_contours)):
-            countours = previous_contours[i]
+            contours = previous_contours[i]
             previous_frame = previous_frames_colour[i]
-            for countour in countours:
+            for countour in contours:
                 x, y, w, h = cv2.boundingRect(countour)
                 x += w / 4
                 y += h / 4

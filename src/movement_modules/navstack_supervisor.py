@@ -86,7 +86,7 @@ def state_callback(state_msg):
     :param state_msg: The current state of the robot's State Machine and data about table if applicable
     :type state_msg: std_msgs.msg.String
     """
-    global home_pose, client
+    global home_pose, client, current_table_id
     state_json = json.loads(state_msg.data)
     goal = MoveBaseGoal()
     # determine goal based on state
@@ -189,7 +189,6 @@ def follow_callback(data):
     if state_json['id'] != 'FOLLOW_PERP':
         return
 
-
     state_data = state_json['data']
     # sends a goal to get robot to turn 90 left or right
     angle = state_data['angle']
@@ -208,7 +207,7 @@ def current_pose_callback(data):
     :type data: str
     """
     global current_pose
-    current_pose = data.pose.pose # has covariance
+    current_pose = data.pose.pose  # has covariance
 
 
 def go_back_to_latest_table(data):

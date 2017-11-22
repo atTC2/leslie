@@ -8,7 +8,6 @@ from threading import Lock, Thread
 import cv2
 import imutils
 import rospy
-from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
@@ -69,7 +68,7 @@ def save_distance(img):
     cv_image = cv2.cvtColor(cv_image, cv2.COLOR_GRAY2RGB)
 
     # draw the bounding box around the thief if available
-    if (latest_rect_global is not None):
+    if latest_rect_global is not None:
         ((xA, yA), (xB, yB)) = latest_rect_global
         cv2.rectangle(cv_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
 
@@ -92,7 +91,7 @@ def rgb_color(img):
     img = bridge.imgmsg_to_cv2(img, "passthrough")
     img = imutils.resize(img, width=min(400, img.shape[1]))
     history_rgb.append(img)
-    if (len(history_rgb) > max_history):
+    if len(history_rgb) > max_history:
         history_rgb = history_rgb[1:]
 
 
