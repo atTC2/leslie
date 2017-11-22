@@ -5,7 +5,7 @@ import numpy
 from imutils.object_detection import non_max_suppression
 import sys
 
-colour_diff_threshold = 40
+colour_diff_threshold = 45
 fov = 120.0  # camera field of view
 
 

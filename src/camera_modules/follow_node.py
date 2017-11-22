@@ -145,12 +145,13 @@ def decide_on_thief_status():
                 cv2.imshow('actualimage', drawn_on_image)
                 cv2.waitKey(1)
             
-            if time.time() - start_time > 160:
+            # print 'time1', time.time() - start_time
+            if time.time() - start_time > 50:
                 print 'Timed out'
                 return
             
-            print 'time', time.time() - counter_time
-            if time.time() - counter_time > 40:
+            # print 'time2', time.time() - counter_time
+            if time.time() - counter_time > 22:
                 print 'Counter limit'
                 return
 
