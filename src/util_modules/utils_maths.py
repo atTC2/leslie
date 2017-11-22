@@ -3,6 +3,7 @@ import math
 from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
 
+
 def rotateQuaternion(q_orig, yaw):
     """
     Converts a basic rotation about the z-axis (in radians) into the
@@ -58,6 +59,7 @@ def multiply_quaternions( qa, qb ):
     combined.z = (qa.w * qb.z + qa.x * qb.y - qa.y * qb.x + qa.z * qb.w)
     return combined
 
+
 def create_quanternion_from_yaw(yaw):
     """
     Creates a quanternion with a given yaw
@@ -78,14 +80,15 @@ def create_quanternion_from_yaw(yaw):
 
 def new_quanternion(old_quanternion, angle):
     yaw = math.radians(angle)
-    print 'received angle ', angle
-    print 'yaw converted ', yaw
+    # print 'received angle ', angle
+    # print 'yaw converted ', yaw
     return rotateQuaternion(old_quanternion, yaw)
 
 
 def yawFromQuaternion(q):
     return math.atan2(2 * (q.x * q.y + q.w * q.z),
                       q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z)
+
 
 def convert_to_map_angle(angle):
     return angle * -1
@@ -94,29 +97,27 @@ def convert_to_map_angle(angle):
 def new_point(old_pose, cam_angle, distance):
     angle = convert_to_map_angle(cam_angle)
 
-    print old_pose.orientation
-    old_yaw =  yawFromQuaternion(old_pose.orientation)
-    print 'old roration',  math.degrees(old_yaw)
+    # print old_pose.orientation
+    old_yaw = yawFromQuaternion(old_pose.orientation)
+    # print 'old roration',  math.degrees(old_yaw)
     new_orientation = new_quanternion(old_pose.orientation, angle)
 
-    print new_orientation
-    new_yaw =  yawFromQuaternion(new_orientation)
-    print 'after rotation', math.degrees(new_yaw)
+    # print new_orientation
+    new_yaw = yawFromQuaternion(new_orientation)
+    # print 'after rotation', math.degrees(new_yaw)
 
     opposite = math.sin(new_yaw) * distance
     adjacent = math.cos(new_yaw) * distance
-    print 'adjacent ', adjacent
-    print 'opposite', opposite
+    # print 'adjacent ', adjacent
+    # print 'opposite', opposite
+    #
+    # print 'old position ', old_pose.position.x, old_pose.position.y
 
-    print 'old position ', old_pose.position.x, old_pose.position.y
-
-    degrees = math.degrees(new_yaw)
+    # degrees = math.degrees(new_yaw)
     new_x = old_pose.position.x + adjacent
     new_y = old_pose.position.y + opposite
-    '''
-
-    '''
-    print 'new position', new_x, new_y
+    
+    # print 'new position', new_x, new_y
     goal_pose = Pose()
     goal_pose.position = Point(new_x, new_y, 0)
     goal_pose.orientation = new_orientation

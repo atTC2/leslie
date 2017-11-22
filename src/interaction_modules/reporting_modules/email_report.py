@@ -31,6 +31,7 @@ def ask_send_report_email(name, file_path):
         handled_alarm()
         return
 
+    # Give the incident reporter a new callback
     speech_engine.say("would you like an incident report via email")
     yes_no_listener.callback = partial(real_send_email, name, user_info['email_address'], file_path)
 

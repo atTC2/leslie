@@ -66,7 +66,7 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size):
                 new_yB = 299
 
             mode_colour = get_mode_colour(unmodified_image,
-                                          new_xA, new_yA, new_xB, new_yB)
+                                          new_xA, new_yA, new_xB, new_yB, True)
             print 'mode', mode_colour
             cv2.rectangle(drawn_on_image, (new_xA, new_yA), (new_xB, new_yB), (0, 255, 255), 2)
             cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 255, 0), 2)
@@ -173,6 +173,8 @@ def get_mode_colour(image, left, up, right, down, histogram=False):
     :type right: int
     :param down: bounding box bottom right y position
     :type down: int
+    :param histogram: Whether you want to display the histogram
+    :type histogram: bool
     :return: The mode RGB values
     :rtype: tuple of int
     """
@@ -185,7 +187,7 @@ def get_mode_colour(image, left, up, right, down, histogram=False):
         plt.figure(200)
         plt.clf()
         plt.cla()
-        plt.plot(range_array, b, 'b', range_array, g, 'g', range_array, r, 'r')  # including h here is crucial
+        plt.plot(range_array, b, 'b', range_array, g, 'g', range_array, r, 'r')
 
         plt.pause(0.0001)
     return get_mode(r, g, b)
@@ -222,7 +224,7 @@ def detect_angle_to_person(image, rectangle, distro_size):
     global fov
     top_left = rectangle[0][0]
     bottom_right = rectangle[1][0]
-    if (bottom_right >= distro_size):
+    if bottom_right >= distro_size:
         bottom_right = distro_size - 1
 
     mid_image = image.shape[1] / 5.0
@@ -233,7 +235,7 @@ def detect_angle_to_person(image, rectangle, distro_size):
 
     if centre <= mid_image:
         return -fixed_angle
-    if centre > mid_image and centre < (mid_image)*4:
+    if mid_image < centre < mid_image * 4:
         return 0
     if centre >= (mid_image * 4):
         return fixed_angle
@@ -263,7 +265,7 @@ def get_distance(((xA, yA), (xB, yB)), depth_history):
         depth_image = depth_image[yA:yB, xA:xB]
 
         values = filter(lambda a: a != 0, depth_image.flatten())
-        if (len(values) > 0):
+        if len(values) > 0:
             avg_distance = numpy.array(values).mean()
 
     if avg_distance == 666666:
@@ -275,7 +277,7 @@ def init_distro(distro_size):
     """
     Returns an evenly distributed probabililty distribution
     """
-    return [1.0 / distro_size for i in range(0, 400)]
+    return [1.0 / distro_size for _ in range(0, 400)]
 
 
 def normpdf(x, mean, sd):
@@ -289,6 +291,8 @@ def normpdf(x, mean, sd):
     :type mean: float
     :param sd: the standard deviation
     :type sd: float
+    :return: Probability
+    :rtype: float
     """
     var = float(sd) ** 2
     pi = 3.1415926
@@ -310,10 +314,10 @@ def update_distro(mean, std_dev, distro, distro_size):
     :param type: float
     :param std_dev: standard deviation for creating distribution
     :param type: float
-    :param distro:  distribution to update
+    :param distro: distribution to update
     :type distro: float[]
     :param distro_size:  size of distribution
-    :type distro: float
+    :type distro_size: int
     """
     minimum_value = 0.00001
     importance = 7
@@ -321,14 +325,14 @@ def update_distro(mean, std_dev, distro, distro_size):
     other_distro = [normpdf(i, mean, std_dev) for i in range(0, distro_size)]
 
     for i in range(0, 400):
-        if (other_distro[i] < minimum_value):
+        if other_distro[i] < minimum_value:
             other_distro[i] = minimum_value
 
     other_distro = [float(i) / sum(other_distro) for i in other_distro]
 
     for i in range(0, 400):
         distro[i] = importance * distro[i] + other_distro[i]
-        if (distro[i] < minimum_value):
+        if distro[i] < minimum_value:
             distro[i] = minimum_value
 
     distro = [float(i) / sum(distro) for i in distro]
@@ -337,7 +341,7 @@ def update_distro(mean, std_dev, distro, distro_size):
     plt.figure(100)
     plt.clf()
     plt.cla()
-    plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')  # including h here is crucial
+    plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')
 
     plt.pause(0.0001)
     return distro.index(max(distro))

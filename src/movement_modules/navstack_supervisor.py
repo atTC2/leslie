@@ -110,7 +110,7 @@ def go_to_goal(goal, state_json, attempt):
     :param state_json: The state JSON (containing current state information)
     :param attempt: The attempt number
     :type goal: MoveBaseGoal
-    :type state_json: object
+    :type state_json: dict
     :type attempt: int
     """
     client.wait_for_server()  # blocks indefinitely
@@ -182,7 +182,7 @@ def follow_callback(data):
     Set a new goal for the robot when following/chasing a person.
     Needs to have an ID of FOLLOW_PERP, an angle and a distance.
     :param data: The message containing the angle and distance for the new goal
-    :type data: str
+    :type data: String
     """
     global goal_handler, current_pose
     state_json = json.loads(data.data)
@@ -205,7 +205,7 @@ def current_pose_callback(data):
     """
     Return the current pose of the robot.
     :param data: The message passed from AMCL
-    :type data: str
+    :type data: PoseWithCovarianceStamped
     """
     global current_pose
     current_pose = data.pose.pose  # has covariance
@@ -217,12 +217,12 @@ def go_back_to_latest_table(data):
     to the latest table. The current_table_id is set
     when called state_callback with the tableID parameter.
     :param data: The message passed from the publisher through the subscriber
-    :type data: str
+    :type data: String
     """
     global current_table_id
     goal = MoveBaseGoal()
     goal.target_pose.pose = table[current_table_id]
-    go_to_goal(goal, data, 0)
+    go_to_goal(goal, json.loads(data.data), 0)
 
 
 # ROS node stuff

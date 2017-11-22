@@ -175,7 +175,7 @@ def lookout_for_thief(state):
     unless of course the owner has returned.
 
     :param state: The full state data
-    :type state: dict (json)
+    :type state: dict
     """
     global locked_colour, waypoint_pub, distro, distro_size
     print 'LOOKING FOR THIEF'
