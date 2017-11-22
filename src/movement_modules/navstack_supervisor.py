@@ -37,7 +37,7 @@ map_resolution = meta_data.resolution
 #  --- Create the Pose for leslie at each table
 
 #  The orientation for leslie to face the table, taken from Rviz
-table_orientation = Quaternion(0.0, 0.0, 0.0, 1.0)
+table_orientation = Quaternion(0.0, 0.0, 0.087, -0.996)
 table = []
 for i in range(5):
     p = Pose()
@@ -45,17 +45,24 @@ for i in range(5):
     table.append(p)
 
 # positions are taken from rviz
-table[0].position = Point(-1.8060284138, -4.99175453186, 0)
+table[0].position = Point(-2, -4.8, 0)
 table[1].position = Point(-1.2, -2.0, 0)
-table[2].position = Point(-0.04291536808, 0.249539896846, 0)
+table[2].position = Point(-0.04291536808, 0.29, 0)
 table[3].position = Point(1.05023245811, 2.81623911858, 0)
 table[4].position = Point(2.22847919464, 5.56012153625, 0)
 
 #  --- --- --- --- --- ---
 
 home_pose = Pose()
-home_pose.position = Point(-1.38991832733, -9.28993225098, 0)
+# Starting pose left of floor
+home_pose.position = Point(-1.5, -9.0, 0)
 home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
+# Starting pose right of floor
+# home_pose.position = Point(5.50601768494, 8.32301235199, 0)
+# home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
+# Starting pose bins in the middle
+# home_pose.position = Point(-1.44410264492, 0.979160249233, 0)
+# home_pose.orientation = Quaternion(0, 0, -0.206,  0.979)
 
 #  create action client, interface with navstack via client-server model
 client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
