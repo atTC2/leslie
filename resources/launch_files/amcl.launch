@@ -21,6 +21,11 @@
     <!--<param name="initial_pose_y"            value="0.979160249233"/>-->
     <!--<param name="initial_pose_a"            value="-0.4145157"/>-->
     
+    <!-- Starting pose table 1 -->
+    <!--<param name="initial_pose_x"            value="-2"/>-->
+    <!--<param name="initial_pose_y"            value="-4.8"/>-->
+    <!--<param name="initial_pose_a"            value="-0.3"/>-->
+    
     <!-- Starting pose table 5 -->
     <!--<param name="initial_pose_x"            value="2.22847919464"/>-->
     <!--<param name="initial_pose_y"            value="5.56012153625"/>-->
