@@ -186,6 +186,7 @@ def follow_callback(data):
     """
     global goal_handler, current_pose
     state_json = json.loads(data.data)
+    print "FOLLOW_CALLBACK", data
     if state_json['id'] != 'FOLLOW_PERP':
         return
 
@@ -229,8 +230,8 @@ rospy.init_node('navstack_supervisor')
 state_pub = rospy.Publisher('/action', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
 state_util.prime_state_callback_with_starting_state(state_callback)
-rospy.Subscriber('/waypoint', String, follow_callback, queue_size=10)
-rospy.Subscriber('/backhome', String, go_back_to_latest_table, queue_size=10)
+rospy.Subscriber('/waypoint', String, follow_callback, queue_size=1)
+rospy.Subscriber('/backhome', String, go_back_to_latest_table, queue_size=1)
 rospy.Subscriber('/move_base_simple/goal', PoseStamped, goal_callback, queue_size=1)
 rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, current_pose_callback, queue_size=10)
 rospy.spin()

@@ -74,15 +74,13 @@ def detect_change(frame):
 
     # Has there been a change?
     changed = False
-    saved_contour_list = []
+    previous_contours.append(contours)
     for contour in contours:
         # If the contour is too small, ignore it
         if cv2.contourArea(contour) < MIN_CONTOUR_AREA:
             continue
-        else:
-            saved_contour_list.append(contour)
-            changed = True
-            break
+        changed = True
+        break
 
     if changed:
         decide_which_way(contours, frame)
@@ -101,7 +99,6 @@ def detect_change(frame):
     if changed:
         save_frame(frame)
 
-    previous_contours.append(saved_contour_list)
     if len(previous_contours) > FRAME_QUEUE_SIZE:
         previous_contours = previous_contours[1:]
     previous_frames_colour.append(original_image)

@@ -35,11 +35,10 @@ distro_size = 400  # size of distribution
 
 last_degree = None  # the angle calculated by actino model
 
-waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=10)
-
 state_id = state_util.get_start_state()
 
 chase = False
+
 
 def save_distance(img):
     """
@@ -183,9 +182,9 @@ def lookout_for_thief(state):
     which_way = state['data']['which_way']
 
     # Turn
-    if which_way == 'True':
+    if which_way:
         waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': 90, 'distance': 0}}))
-    if which_way == 'False':
+    else:
         waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': -90, 'distance': 0}}))
 
     locked_colour = state['data']['colour']
@@ -204,6 +203,7 @@ rospy.init_node('follow_node')
 rospy.Subscriber('/state', String, callback, queue_size=10)
 pub = rospy.Publisher('/action', String, queue_size=10)
 backhome_pub = rospy.Publisher('/backhome', String, queue_size=1)
+waypoint_pub = rospy.Publisher('/waypoint', String, queue_size=1)
 rospy.Subscriber('/camera/depth/image_raw', Image, save_distance, queue_size=1)
 rospy.Subscriber('/image_view/output', Image, rgb_color, queue_size=1)
 state_util.prime_state_callback_with_starting_state(callback)

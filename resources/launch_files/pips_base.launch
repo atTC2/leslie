@@ -31,7 +31,9 @@
   </include>
   <!-- Depth camera files -->
   <include file="$(find astra_launch)/launch/astra.launch" if="$(arg use_depth_for_change_node)" />
+  <!-- USB Cam should only be used if one of the following is true -->
   <include file="$(find usb_cam)/launch/usb_cam-test.launch" if="$(arg use_depth_for_change_node)" />
+  <include file="$(find usb_cam)/launch/usb_cam-test.launch" if="$(arg follow_people)" />
 
   <node name="navstack_supervisor" pkg="leslie" type="navstack_supervisor.py" output="screen" />
   <node name="facial_node" pkg="leslie" type="facial_node.py" output="screen"
