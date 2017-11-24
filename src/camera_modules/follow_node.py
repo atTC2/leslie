@@ -252,6 +252,7 @@ def callback(state_msg):
     """
     global state_id, distro_size, angle_split, importance, std_dev_evidence
 
+    print 'CALLED'
     state = json.loads(state_msg.data)
     state_id = state['id']
     if state['id'] == states.ALARM or state['id'] == 'FAKE_ALARM':
@@ -276,6 +277,7 @@ def lookout_for_thief(state):
     """
     global locked_colour, waypoint_pub, distro, distro_size, figure_counter
     print 'LOOKING FOR THIEF'
+    """
     which_way = state['data']['which_way']
 
     # Turn
@@ -284,6 +286,7 @@ def lookout_for_thief(state):
     else:
         waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': -90, 'distance': 0}}))
 
+    """
     locked_colour = state['data']['colour']
     with distro_lock:
         distro = init_distro(distro_size)
