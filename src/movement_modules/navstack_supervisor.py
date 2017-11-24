@@ -135,6 +135,8 @@ def go_to_goal(goal, state_json, attempt):
             state_pub.publish(String(json.dumps(action_data)))
         elif state_json['id'] == states.ALARM:
             pass
+        else:
+            fake_pub.publish(String(json.dumps({'id': 'FAKE_ARRIVE'})))
     else:
         # Failed to reach goal
         # leaving relocalisation test code in, as may be useful if we test to compare the two methods
@@ -228,6 +230,7 @@ def go_back_to_latest_table(data):
 # ROS node stuff
 rospy.init_node('navstack_supervisor')
 state_pub = rospy.Publisher('/action', String, queue_size=10)
+fake_pub = rospy.Publisher('/state', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
 state_util.prime_state_callback_with_starting_state(state_callback)
 rospy.Subscriber('/waypoint', String, follow_callback, queue_size=1)

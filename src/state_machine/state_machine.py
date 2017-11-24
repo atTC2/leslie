@@ -29,7 +29,7 @@ state_machine = {
     (ALARM,                FACE_RECOGNISED):   ALARM_REPORT,
     (ALARM_REPORT,         ALARM_HANDLED):     MOVE_TO_HOME,
     (LOCKED_AND_WAITING,   FACE_RECOGNISED):   MOVE_TO_HOME,
-    (MOVE_TO_HOME,         ARRIVED):           AT_HOME
+    (MOVE_TO_HOME,         ARRIVED):           AT_HOME    
 }
 
 # Get the starting state from the config.

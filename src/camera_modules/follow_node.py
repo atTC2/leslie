@@ -254,7 +254,7 @@ def callback(state_msg):
 
     state = json.loads(state_msg.data)
     state_id = state['id']
-    if state['id'] == states.ALARM:
+    if state['id'] == states.ALARM or state['id'] == 'FAKE_ALARM':
         distro_size = state['data']['distro_size']
         angle_split = state['data']['angle_split']
         importance = state['data']['importance']
