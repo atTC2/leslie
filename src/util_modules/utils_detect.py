@@ -4,12 +4,15 @@ import matplotlib.pyplot as plt
 import numpy
 from imutils.object_detection import non_max_suppression
 import sys
+from util_modules import config_access
 
+
+angle_split = config_access.get_config(config_access.KEY_ANGLE_SPLIT)
 colour_diff_threshold = 45
 fov = 120.0  # camera field of view
 
 
-def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure_counter):
+def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure_counter, angle_split):
     """
     Given an image, detect if there are people inside it.
     If there are people in the image, return the angle and the rectangle
@@ -60,13 +63,13 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure
             new_yA = (yB - yA) / 4 + yA
             new_xB = xB - (xB - xA) / 3
             new_yB = yB - (yB - yA) / 2
-            if new_xB >= 400:
-                new_xB = 399
-            if new_yB >= 300:
-                new_yB = 299
+            if new_xB >= distro_size:
+                new_xB = (distro_size - 1)
+            if new_yB >= (distro_size * 3 / 4):
+                new_yB = (distro_size * 3 / 4 - 1)
 
             mode_colour = get_mode_colour(unmodified_image,
-                                          new_xA, new_yA, new_xB, new_yB, True, figure_counter)
+                                          new_xA, new_yA, new_xB, new_yB, False, figure_counter)
             print 'mode', mode_colour
             cv2.rectangle(drawn_on_image, (new_xA, new_yA), (new_xB, new_yB), (0, 255, 255), 2)
             cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 255, 0), 2)
@@ -79,7 +82,7 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure
                 closest_colour_diff = colour_diff
                 closest_rect = ((xA, yA), (xB, yB))
                 latest_rect_global = closest_rect
-                angle = detect_angle_to_person(unmodified_image, ((xA, yA), (xB, yB)), distro_size)
+                angle = detect_angle_to_person(unmodified_image, ((xA, yA), (xB, yB)), distro_size, angle_split)
 
         lost = closest_colour_diff > colour_diff_threshold
 
@@ -207,7 +210,7 @@ def index_of_max(arr):
     return max_index
 
 
-def detect_angle_to_person(image, rectangle, distro_size):
+def detect_angle_to_person(image, rectangle, distro_size, angle_split):
     """
     Given an image and points describing a rectangle,
     which represent a person,
@@ -227,7 +230,7 @@ def detect_angle_to_person(image, rectangle, distro_size):
     if bottom_right >= distro_size:
         bottom_right = distro_size - 1
 
-    mid_image = image.shape[1] / 5.0
+    mid_image = image.shape[1] / float(angle_split)
 
     centre = ((top_left + bottom_right) / 2)
 
@@ -235,9 +238,9 @@ def detect_angle_to_person(image, rectangle, distro_size):
 
     if centre <= mid_image:
         return -fixed_angle
-    if mid_image < centre < mid_image * 4:
+    if mid_image < centre < mid_image * (angle_split - 1):
         return 0
-    if centre >= (mid_image * 4):
+    if centre >= (mid_image * (angle_split - 1)):
         return fixed_angle
 
 
@@ -277,7 +280,7 @@ def init_distro(distro_size):
     """
     Returns an evenly distributed probabililty distribution
     """
-    return [1.0 / distro_size for _ in range(0, 400)]
+    return [1.0 / distro_size for _ in range(0, distro_size)]
 
 
 def normpdf(x, mean, sd):

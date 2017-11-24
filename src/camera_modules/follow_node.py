@@ -6,7 +6,7 @@ import math
 import time
 from cv_bridge import CvBridge  # pylint: disable=F0401
 from threading import Lock, Thread
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 import cv2
 import imutils
@@ -19,6 +19,8 @@ from std_msgs.msg import String
 from state_machine import states, state_util
 from util_modules import utils_maths, utils_detect
 from util_modules.utils_detect import detect_closest_to_thief, init_distro, detect_angle_to_person, normpdf
+from util_modules import config_access
+
 
 # --- array variables holding data on images current and previous ---
 depth_history = []  # history of depth images
@@ -36,7 +38,7 @@ locked_colour = None  # colour of thief's shirt
 
 distro_lock = Lock()  # Thread lock for updating 'belief' distribution
 distro = []  # distribution representing `belief`
-distro_size = 400  # size of distribution
+distro_size = config_access.get_config(config_access.KEY_DISTRO_SIZE)
 # --------------------------------------------------
 
 last_degree = None  # the angle calculated by action model
@@ -46,6 +48,11 @@ state_id = state_util.get_start_state()
 chase = True
 figure_counter = 1
 
+importance = config_access.get_config(config_access.KEY_IMPORTANCE)
+std_dev_evidence = config_access.get_config(config_access.KEY_STD_DEV_EVIDENCE)
+chase_timeout = config_access.get_config(config_access.KEY_OVERALL_CHASE_TIMEOUT)
+unseen_timeout = config_access.get_config(config_access.KEY_UNSEED_CHASE_TIMEOUT)
+angle_split = config_access.get_config(config_access.KEY_ANGLE_SPLIT)
 
 def save_distance(img):
     """
@@ -55,13 +62,13 @@ def save_distance(img):
     :param img: depth image
     :type img: sensor_msgs.msg.Image
     """
-    global max_history, depth_history, global_lock
+    global max_history, depth_history, global_lock, distro_size
 
     # use a cv bridge to convert depth image into c2 image
     bridge = CvBridge()
     cv_image = bridge.imgmsg_to_cv2(img, "16UC1")
     # resize the image width to be 400px or less, don't need full fov
-    cv_image = imutils.resize(cv_image, width=min(400, cv_image.shape[1]))
+    cv_image = imutils.resize(cv_image, width=min(distro_size, cv_image.shape[1]))
     cv_image = numpy.array(cv_image, dtype=numpy.float32)
     # add to history
     depth_history.append(cv_image)
@@ -93,10 +100,10 @@ def rgb_color(img):
     :param img: image to convert
     :type img: nump.array/cv2.image
     """
-    global history_rgb, max_history, global_lock
+    global history_rgb, max_history, global_lock, distro_size
     bridge = CvBridge()
     img = bridge.imgmsg_to_cv2(img, "passthrough")
-    img = imutils.resize(img, width=min(400, img.shape[1]))
+    img = imutils.resize(img, width=min(distro_size, img.shape[1]))
     history_rgb.append(img)
     if len(history_rgb) > max_history:
         history_rgb = history_rgb[1:]
@@ -115,6 +122,7 @@ def decide_on_thief_status():
     global locked_colour
     global history_rgb, max_history, latest_rect_global, locked_colour
     global distro, distro_size, figure_counter
+    global chase_timeout, unseen_timeout, std_dev_evidence, angle_split
     counter_time = time.time()
     start_time = time.time()
 
@@ -123,12 +131,12 @@ def decide_on_thief_status():
             img = history_rgb[len(history_rgb) - 1]
 
             # Apply the method
-            drawn_on_image, angle, lost, closest_rect, latest_rect = detect_closest_to_thief(img, locked_colour, distro_size, figure_counter)
+            drawn_on_image, angle, lost, closest_rect, latest_rect = detect_closest_to_thief(img, locked_colour, distro_size, figure_counter, angle_split)
             latest_rect_global = latest_rect
             if closest_rect is not None:
                 ((xA, yA), (xB, yB)) = closest_rect
                 with distro_lock:
-                    update_distro((xB - xA) / 2 + xA, 10)
+                    update_distro((xB - xA) / 2 + xA, std_dev_evidence)
                 cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
             # Make frame
             if not lost:
@@ -138,21 +146,21 @@ def decide_on_thief_status():
 
                 # Following code is for following people which is not completed
                 if chase:
-                    angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, 300)), distro_size)
+                    angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, distro_size * 3 / 4)), distro_size)
                     waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': 0.5}}))
 
-                cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, 300), (255, 0, 0), 2)
+                cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, distro_size * 3 / 4), (255, 0, 0), 2)
             with global_lock:
                 cv2.imshow('actualimage', drawn_on_image)
                 cv2.waitKey(1)
 
             # print 'time1', time.time() - start_time
-            if time.time() - start_time > 50:
+            if time.time() - start_time > chase_timeout:
                 print 'Timed out'
                 return
 
             # print 'time2', time.time() - counter_time
-            if time.time() - counter_time > 22:
+            if time.time() - counter_time > unseen_timeout:
                 print 'Counter limit'
                 return
 
@@ -171,32 +179,31 @@ def update_distro(mean, std_dev):
     :param std_dev: standard deviation for creating distribution
     :type std_dev: float
     """
-    global distro, distro_size, figure_counter
+    global distro, distro_size, figure_counter, importance, distro_size
     minimum_value = 0.00001
-    importance = 7
 
     other_distro = [normpdf(i, mean, std_dev) for i in range(0, distro_size)]
 
-    for i in range(0, 400):
+    for i in range(0, distro_size):
         if other_distro[i] < minimum_value:
             other_distro[i] = minimum_value
 
     other_distro = [float(i) / sum(other_distro) for i in other_distro]
 
-    for i in range(0, 400):
+    for i in range(0, distro_size):
         distro[i] = importance * distro[i] + other_distro[i]
         if distro[i] < minimum_value:
             distro[i] = minimum_value
 
     distro = [float(i) / sum(distro) for i in distro]
 
-    range_array = range(0, 400)
-    plt.figure(figure_counter)
-    plt.clf()
-    plt.cla()
-    plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')
+    range_array = range(0, distro_size)
+    # plt.figure(figure_counter)
+    # plt.clf()
+    # plt.cla()
+    # plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')
 
-    plt.pause(0.0001)
+    # plt.pause(0.0001)
     return distro.index(max(distro))
 
 
@@ -226,6 +233,7 @@ def read_odom(msg):
 
 
 def shift_arr(arr, by, default):
+    global distro_size
     if by < 0:
         arr.reverse()
         res = shift_arr(arr, -by, default)
@@ -242,11 +250,16 @@ def callback(state_msg):
     :param state_msg: The new state information
     :type state_msg: std_msgs.msg.String
     """
-    global state_id
+    global state_id, distro_size, angle_split, importance, std_dev_evidence
 
     state = json.loads(state_msg.data)
     state_id = state['id']
     if state['id'] == states.ALARM:
+        distro_size = state['data']['distro_size']
+        angle_split = state['data']['angle_split']
+        importance = state['data']['importance']
+        std_dev_evidence = state['data']['std_dev_evidence']
+
         Thread(target=lookout_for_thief, args=[state]).start()
 
 
@@ -276,8 +289,8 @@ def lookout_for_thief(state):
         distro = init_distro(distro_size)
     decide_on_thief_status()
 
-    plt.close(figure_counter)
-    plt.close(figure_counter + 1)
+    # plt.close(figure_counter)
+    # plt.close(figure_counter + 1)
 
     figure_counter += 2
 

@@ -27,5 +27,12 @@
     "starting_state": {
         "id": "AT_HOME",
         "data": {}
-    }
+    },
+    "importance": 7,
+    "std_dev_evidence": 10,
+    "angle_split": 5,
+    "distro_size": 400,
+    "overall_chase_timeout": 50,
+    "unseen_chase_timeout": 22
+
 }
