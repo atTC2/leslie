@@ -290,7 +290,7 @@ def lookout_for_thief(state):
     locked_colour = state['data']['colour']
     with distro_lock:
         distro = init_distro(distro_size)
-    decide_on_thief_status()
+    # decide_on_thief_status()
 
     # plt.close(figure_counter)
     # plt.close(figure_counter + 1)

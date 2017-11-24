@@ -16,6 +16,7 @@ from util_modules import utils_maths
 from interaction_modules.yes_no_listener import YesNoListener
 from state_machine import states, actions, state_util
 from util_modules import speech_engine
+import math
 
 if __name__ != '__main__':
     from sys import stderr
@@ -75,6 +76,9 @@ yes_no_listener = YesNoListener()
 goal_handler = None
 current_pose = None
 
+diff_angle = -1
+diff_distance = -1
+goal_test = Point(5.50601768494, 8.32301235199, 0)
 
 def state_callback(state_msg):
     """
@@ -113,6 +117,7 @@ def go_to_goal(goal, state_json, attempt):
     :type state_json: dict
     :type attempt: int
     """
+    global diff_distance, diff_angle
     client.wait_for_server()  # blocks indefinitely
     # sets goal, send to navstack server and waits for navstack to run
     goal.target_pose.header.frame_id = "/map"
@@ -136,7 +141,11 @@ def go_to_goal(goal, state_json, attempt):
         elif state_json['id'] == states.ALARM:
             pass
         else:
-            fake_pub.publish(String(json.dumps({'id': 'FAKE_ARRIVE'})))
+            fake_pub.publish(String(json.dumps({'id': 'FAKE_ARRIVE',
+                                                'data': {
+                                                    'dist_diff': diff_distance,
+                                                    'angle_diff': diff_angle
+                                                }})))
     else:
         # Failed to reach goal
         # leaving relocalisation test code in, as may be useful if we test to compare the two methods
@@ -213,6 +222,20 @@ def current_pose_callback(data):
     current_pose = data.pose.pose  # has covariance
 
 
+def get_diff_distance():
+    global current_pose, goal_test
+    return math.sqrt(math.pow(goal_test.x - current_pose.position.x, 2) + math.pow(goal_test.y - current_pose.position.y, 2))
+
+def get_diff_angle():
+    global current_pose, goal_test
+    adjacent = goal_test.x - current_pose.position.x
+    opposite = goal_test.y - current_pose.position.y
+
+    wanted_angle = math.degrees(math.atan2(opposite, adjacent))
+    actual_angle = math.degrees(utils_maths.yawFromQuaternion(current_pose.orientation))
+    return abs(actual_angle - wanted_angle)
+
+
 def go_back_to_latest_table(data):
     """
     After chasing a thief, the robot should return
@@ -220,8 +243,11 @@ def go_back_to_latest_table(data):
     when called state_callback with the tableID parameter.
     :param data: The message passed from the publisher through the subscriber
     :type data: String
-    """
-    global current_table_id
+    """    
+    global current_table_id, diff_angle, diff_distance
+    diff_distance = get_diff_distance()
+    diff_angle = get_diff_angle()
+
     goal = MoveBaseGoal()
     goal.target_pose.pose = table[current_table_id]
     go_to_goal(goal, json.loads(data.data), 0)
