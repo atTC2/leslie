@@ -1,45 +1,45 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
-  
+
   <arg name="sleep_multiplier" default="1"/>
   <arg name="sleep" value="$(find leslie)/resources/launch_prefixes/sleepy.sh $(arg sleep_multiplier)" />
-  
+
   <node name="amcl" pkg="amcl" type="amcl"
         launch-prefix="$(arg sleep) 3">
     <!-- Starting pose left of floor -->
-    <param name="initial_pose_x"            value="-1.5"/>
-    <param name="initial_pose_y"            value="-9.0"/>
-    <param name="initial_pose_a"            value="2.63545"/>
-    
+    <param name="initial_pose_x"            value="0.403854131699"/>
+    <param name="initial_pose_y"            value="10.8916559219"/>
+    <param name="initial_pose_a"            value="-0.367"/>
+
     <!-- Starting pose right of floor -->
     <!--<param name="initial_pose_x"            value="5.50601768494"/>-->
     <!--<param name="initial_pose_y"            value="8.32301235199"/>-->
     <!--<param name="initial_pose_a"            value="2.63545"/>-->
-    
+
     <!-- Starting pose bins in the middle -->
     <!--<param name="initial_pose_x"            value="-1.44410264492"/>-->
     <!--<param name="initial_pose_y"            value="0.979160249233"/>-->
     <!--<param name="initial_pose_a"            value="-0.4145157"/>-->
-    
+
     <!-- Starting pose table 1 -->
     <!--<param name="initial_pose_x"            value="-2"/>-->
     <!--<param name="initial_pose_y"            value="-4.8"/>-->
     <!--<param name="initial_pose_a"            value="-0.3"/>-->
-    
+
     <!-- Starting pose table 5 -->
     <!--<param name="initial_pose_x"            value="2.22847919464"/>-->
     <!--<param name="initial_pose_y"            value="5.56012153625"/>-->
     <!--<param name="initial_pose_a"            value="-0.3"/>-->
-    
-    
+
+
     <param name="min_particles"             value="500"/>
     <param name="max_particles"             value="1000"/>
 
 
     <!-- set amcl to suscribe to right topics -->
     <param name="global_frame_id"           value="/map"/>
-    <param name="odom_frame_id"             value="/odom"/> 
-    <param name="base_frame_id"             value="/base_link"/> 
+    <param name="odom_frame_id"             value="/odom"/>
+    <param name="base_frame_id"             value="/base_link"/>
     <remap from="scan"                      to="/base_scan"/>
   </node>
 </launch>

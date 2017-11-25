@@ -1,0 +1,118 @@
+
+Current configuration  {'importance': 5
+, 'std_dev_evidence': 10, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 4}
+distance 3.10619508696
+angle:  40.7788790277
+
+Current configuration  {'importance': 5
+, 'std_dev_evidence': 10, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 5}
+distance 3.35341780301
+angle:  35.8443648098
+
+Current configuration  {'importance': 5
+, 'std_dev_evidence': 10, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 7}
+distance 2.38067228075
+angle:  8.17145620206
+
+Current configuration  {'importance': 5
+, 'std_dev_evidence': 35, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 4}
+distance 1.57638287354
+angle:  59.7596934527
+
+Current configuration  {'importance': 5
+, 'std_dev_evidence': 35, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 5}
+distance 2.02129171223
+angle:  44.8622308491
+
+Current configuration  {'importance': 5
+, 'std_dev_evidence': 35, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 7}
+distance 3.36008780197
+angle:  24.8336828788
+
+Current configuration  {'importance': 5
+, 'std_dev_evidence': 70, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 4}
+distance 3.30557815191
+angle:  25.2283805162
+
+Current configuration  {'importance': 5
+, 'std_dev_evidence': 70, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 5}
+distance 1.67505510768
+angle:  41.891640177
+
+Current configuration  {'importance': 5
+, 'std_dev_evidence': 70, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 7}
+distance 3.2908977199
+angle:  24.7452695704
+
+Current configuration  {'importance': 10
+, 'std_dev_evidence': 10, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 4}
+distance 2.34160443763
+angle:  17.0284695537
+
+Current configuration  {'importance': 10
+, 'std_dev_evidence': 10, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 5}
+distance 3.2360739428
+angle:  28.2203891467
+
+Current configuration  {'importance': 10
+, 'std_dev_evidence': 10, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 7}
+distance 1.30524896441
+angle:  70.7314610055
+
+Current configuration  {'importance': 10
+, 'std_dev_evidence': 35, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 4}
+distance 1.50614698628
+angle:  58.9726273094
+
+Current configuration  {'importance': 10
+, 'std_dev_evidence': 35, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 5}
+distance 3.35308766512
+angle:  8.84019944284
+
+Current configuration  {'importance': 10
+, 'std_dev_evidence': 35, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 7}
+distance 1.98515746171
+angle:  9.72227509135
+
+Current configuration  {'importance': 10
+, 'std_dev_evidence': 70, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 4}
+distance 1.56755248911
+angle:  114.935429224
+
+Current configuration  {'importance': 10
+, 'std_dev_evidence': 70, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 5}
+distance 1.4176551475
+angle:  15.4758139865
+
+Current configuration  {'importance': 10
+, 'std_dev_evidence': 70, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 7}
+distance 3.03209256587
+angle:  10.2670392369
+
+Current configuration  {'importance': 25
+, 'std_dev_evidence': 10, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 4}
+distance 2.48065068216
+angle:  19.8450594678
+
+Current configuration  {'importance': 25
+, 'std_dev_evidence': 10, 'colour': [0, 0, 255]
+, 'distro_size': 300, 'angle_split': 5}

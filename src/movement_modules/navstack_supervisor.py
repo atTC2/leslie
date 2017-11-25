@@ -58,9 +58,11 @@ current_table_id = 0
 #  --- --- --- --- --- ---
 
 home_pose = Pose()
+home_pose.position = Point(0.403854131699, 10.8916559216, 0)
+home_pose.orientation = Quaternion(0, 0, -0.1823736272226, 0.983229301889)
 # Starting pose left of floor
-home_pose.position = Point(-1.5, -9.0, 0)
-home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
+# home_pose.position = Point(-1.5, -9.0, 0)
+# home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
 # Starting pose right of floor
 # home_pose.position = Point(5.50601768494, 8.32301235199, 0)
 # home_pose.orientation = Quaternion(0, 0, 0.982110753886, 0.188304187691)
@@ -78,7 +80,7 @@ current_pose = None
 
 diff_angle = -1
 diff_distance = -1
-goal_test = Point(5.50601768494, 8.32301235199, 0)
+goal_test = Point(3.81678438187, 10.6712255478, 0)
 
 def state_callback(state_msg):
     """
@@ -243,13 +245,13 @@ def go_back_to_latest_table(data):
     when called state_callback with the tableID parameter.
     :param data: The message passed from the publisher through the subscriber
     :type data: String
-    """    
+    """
     global current_table_id, diff_angle, diff_distance
     diff_distance = get_diff_distance()
     diff_angle = get_diff_angle()
 
     goal = MoveBaseGoal()
-    goal.target_pose.pose = table[current_table_id]
+    goal.target_pose.pose = home_pose
     go_to_goal(goal, json.loads(data.data), 0)
 
 

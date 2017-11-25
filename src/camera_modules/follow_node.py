@@ -126,7 +126,7 @@ def decide_on_thief_status():
     counter_time = time.time()
     start_time = time.time()
 
-    while state_id == states.ALARM:
+    while state_id == "FAKE_ALARM":
         if len(history_rgb) >= max_history:
             img = history_rgb[len(history_rgb) - 1]
 
@@ -146,7 +146,7 @@ def decide_on_thief_status():
 
                 # Following code is for following people which is not completed
                 if chase:
-                    angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, distro_size * 3 / 4)), distro_size)
+                    angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, distro_size * 3 / 4)), distro_size, angle_split)
                     waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': 0.5}}))
 
                 cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, distro_size * 3 / 4), (255, 0, 0), 2)
@@ -290,17 +290,18 @@ def lookout_for_thief(state):
     locked_colour = state['data']['colour']
     with distro_lock:
         distro = init_distro(distro_size)
-    # decide_on_thief_status()
+    decide_on_thief_status()
 
     # plt.close(figure_counter)
     # plt.close(figure_counter + 1)
 
     figure_counter += 2
 
-    if state_id != states.ALARM:
+    if state_id != "FAKE_ALARM":
         return
 
     backhome_pub.publish(json.dumps({'id': state}))
+
 
 
 rospy.init_node('follow_node')

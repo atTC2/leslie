@@ -7,8 +7,7 @@ import sys
 from util_modules import config_access
 
 
-angle_split = config_access.get_config(config_access.KEY_ANGLE_SPLIT)
-colour_diff_threshold = 45
+colour_diff_threshold = 500000
 fov = 120.0  # camera field of view
 
 
