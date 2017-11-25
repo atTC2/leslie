@@ -21,8 +21,7 @@ def state_callback(data):
     data_json = json.loads(data.data)
     if data_json['id'] == 'FAKE_ARRIVE':
         back_home = True
-        print 'distance', data_json['data']['dist_diff']
-        print 'angle: ', data_json['data']['angle_diff']
+        print data_json['data']['dist_diff'],',', data_json['data']['angle_diff']
 
 
 rospy.init_node('sensor_char_test', anonymous=True)
@@ -30,6 +29,8 @@ pub = rospy.Publisher('/state', String, queue_size=10)
 rospy.Subscriber('/state', String, state_callback, queue_size=10)
 
 time.sleep(5)
+
+index = 0
 
 for size in distro_size:
     for imp in importance:
@@ -40,8 +41,8 @@ for size in distro_size:
                         'std_dev_evidence': dev,
                         'angle_split': angle,
                         'colour': [0, 0, 255]}
-
-                print 'Current configuration ', data
+                index += 1
+                print index,',',size,',',imp,',',dev,',',angle,','
                 back_home = False
                 state_data = {'id': 'FAKE_ALARM', 'data': data}
                 pub.publish(json.dumps(state_data))
