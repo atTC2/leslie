@@ -3,10 +3,11 @@ from std_msgs.msg import String
 import json
 import time
 
-distro_size = [300, 400]
-importance = [5, 10, 25]
-std_dev = [10, 35, 70]
-angle_split = [4, 5, 7]
+distro_size = [400]
+importance = [5]
+std_dev = [70]
+angle_split = [7]
+distance = [0.5, 1, 1.5, 2, 0.5, 1, 1.5, 2, 0.5, 1, 1.5, 2]
 
 back_home = True
 
@@ -36,16 +37,18 @@ for size in distro_size:
     for imp in importance:
         for dev in std_dev:
             for angle in angle_split:
-                data = {'distro_size': size,
-                        'importance': imp,
-                        'std_dev_evidence': dev,
-                        'angle_split': angle,
-                        'colour': [0, 0, 255]}
-                index += 1
-                print index,',',size,',',imp,',',dev,',',angle,','
-                back_home = False
-                state_data = {'id': 'FAKE_ALARM', 'data': data}
-                pub.publish(json.dumps(state_data))
+                for d in distance:
+                    data = {'distro_size': size,
+                            'importance': imp,
+                            'std_dev_evidence': dev,
+                            'angle_split': angle,
+                            'colour': [0, 0, 255],
+                            'distance': d}
+                    index += 1
+                    print index,',',size,',',imp,',',dev,',',angle,',', distance,','
+                    back_home = False
+                    state_data = {'id': 'FAKE_ALARM', 'data': data}
+                    pub.publish(json.dumps(state_data))
 
-                while not back_home:
-                    time.sleep(2)
+                    while not back_home:
+                        time.sleep(2)

@@ -53,6 +53,7 @@ std_dev_evidence = config_access.get_config(config_access.KEY_STD_DEV_EVIDENCE)
 chase_timeout = config_access.get_config(config_access.KEY_OVERALL_CHASE_TIMEOUT)
 unseen_timeout = config_access.get_config(config_access.KEY_UNSEED_CHASE_TIMEOUT)
 angle_split = config_access.get_config(config_access.KEY_ANGLE_SPLIT)
+distance_sensed = -1
 
 def save_distance(img):
     """
@@ -123,6 +124,7 @@ def decide_on_thief_status():
     global history_rgb, max_history, latest_rect_global, locked_colour
     global distro, distro_size, figure_counter
     global chase_timeout, unseen_timeout, std_dev_evidence, angle_split
+    global distance_sensed
     counter_time = time.time()
     start_time = time.time()
 
@@ -147,7 +149,7 @@ def decide_on_thief_status():
                 # Following code is for following people which is not completed
                 if chase:
                     angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, distro_size * 3 / 4)), distro_size, angle_split)
-                    waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': 0.5}}))
+                    waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': distance_sensed}}))
 
                 cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, distro_size * 3 / 4), (255, 0, 0), 2)
             with global_lock:
@@ -250,7 +252,7 @@ def callback(state_msg):
     :param state_msg: The new state information
     :type state_msg: std_msgs.msg.String
     """
-    global state_id, distro_size, angle_split, importance, std_dev_evidence
+    global state_id, distro_size, angle_split, importance, std_dev_evidence, distance_sensed
 
     print 'CALLED'
     state = json.loads(state_msg.data)
@@ -260,7 +262,7 @@ def callback(state_msg):
         angle_split = state['data']['angle_split']
         importance = state['data']['importance']
         std_dev_evidence = state['data']['std_dev_evidence']
-
+        distance_sensed = state['data']['distance']
         Thread(target=lookout_for_thief, args=[state]).start()
 
 
