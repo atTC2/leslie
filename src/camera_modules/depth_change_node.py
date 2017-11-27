@@ -64,9 +64,10 @@ def get_distance(img):
         cv_image = bridge.imgmsg_to_cv2(img, "16UC1")
 
         cv_image = np.array(cv_image, dtype=np.float32)
-        cv_image = cv_image[min_height_cropped:max_height_cropped, min_width_cropped:max_width_cropped, 0:1]
 
-        cv_image = ndimage.gaussian_filter(cv_image, sigma=(5, 5, 0), order=0)
+        cv_image = cv_image[min_height_cropped:max_height_cropped, min_width_cropped:max_width_cropped]
+
+        cv_image = ndimage.gaussian_filter(cv_image, sigma=(5, 5), order=0)
 
         cv_image = cv2.normalize(cv_image, cv_image, 0, 1, cv2.NORM_MINMAX)
         saved_full_image = cv_image.copy()
@@ -78,7 +79,7 @@ def get_distance(img):
                     count_right = 0
                     for i in range(0, max_height_cropped - min_height_cropped):
                         for j in range(0, max_width_cropped - min_width_cropped):
-                            if cv_image[i][j][0] > maxes[i][j][0] or cv_image[i][j][0] < mins[i][j][0]:
+                            if cv_image[i][j] > maxes[i][j] or cv_image[i][j] < mins[i][j]:
                                 # Calculate what side the movement is on, for turning to follow thief.
                                 if j < (max_width_cropped - min_width_cropped)/2:
                                     count_left += 1
@@ -104,12 +105,12 @@ def get_distance(img):
                             first_frame = False
                         else:
                             # Find min and max values of deviations due to noise and add an offset.
-                            for i in range (0, max_height_cropped - min_height_cropped):
-                                for j in range (0, max_width_cropped - min_width_cropped):
-                                    if mins[i][j][0] > last_image[i][j][0]:
-                                        mins[i][j][0] = last_image[i][j][0] - offset
-                                    if maxes[i][j][0] < last_image[i][j][0]:
-                                        maxes[i][j][0] = last_image[i][j][0] + offset
+                            for i in range(0, max_height_cropped - min_height_cropped):
+                                for j in range(0, max_width_cropped - min_width_cropped):
+                                    if mins[i][j] > last_image[i][j]:
+                                        mins[i][j] = last_image[i][j] - offset
+                                    if maxes[i][j] < last_image[i][j]:
+                                        maxes[i][j] = last_image[i][j] + offset
                     pub.publish(json.dumps({'id': actions.READY_TO_LOCK, 'data': state_data}))
 
             if alarm_count > alarm_count_threshold:
