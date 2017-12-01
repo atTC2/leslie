@@ -1,7 +1,7 @@
 {
     "version": "1.1.0",
-    "camera_index_table": 3,
-    "camera_index_face": 2,
+    "camera_index_table": 2,
+    "camera_index_face": 0,
     "table_min_bgr_threshold": [100, 145, 190],
     "table_max_bgr_threshold": [140, 170, 220],
     "change_min_table_width": 0.3,
@@ -25,7 +25,12 @@
     "min_width_cropped": 200,
     "max_width_cropped": 480,
     "starting_state": {
-        "id": "AT_HOME",
-        "data": {}
+        "id": "ALARM",
+        "data": {
+            "current_owner": "Tom",
+            "friend": null,
+            "which_way": true,
+            "colour": [4, 68, 68]
+        }
     }
 }

@@ -4,9 +4,26 @@ import matplotlib.pyplot as plt
 import numpy
 from imutils.object_detection import non_max_suppression
 import sys
+import operator
 
 colour_diff_threshold = 45
 fov = 120.0  # camera field of view
+
+recording = False
+true_colour = 'blue'
+test_colour = 'grey'
+arry_methody_i = 0
+arry_colours_i = 0
+
+if recording:
+    file_name = 'recording.csv'
+else:
+    file_name = 'results.csv'
+
+file_path = '/home/ben/Documents/experiment_colours/' + file_name
+result_file = open(file_path, 'a')
+
+data = []
 
 
 def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure_counter):
@@ -26,6 +43,7 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure
     rectangle bounding box of person most matching to thief
     :rtype: numpy.ndarray, float, bool, ((float, float), (float, float))
     """
+    global data, arry_methody_i, arry_colours_i, test_colour
 
     # use hog detector
     hog = cv2.HOGDescriptor()
@@ -37,13 +55,18 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure
     (rects, weights) = hog.detectMultiScale(unmodified_image, winStride=(6, 6),
                                             padding=(16, 16), scale=1.05)
 
-    # detect_angle_to_person(image, ((x, y), (x+w, y + h)))
+    if recording:
+        test_colour = arry_colours[arry_colours_i][1]
 
+    # detect_angle_to_person(image, ((x, y), (x+w, y + h)))
+    
     angle = 0
     lost = True
     closest_rect = None
     latest_rect_global = None
     if len(rects) != 0:
+        if len(rects) != 1:
+            raise Exception('FUCKED UP, probably saw a plant, top shite.')
         rects = numpy.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
         # apply non-maxima suppression to the bounding boxes using a
         # fairly large overlap threshold to try to maintain overlapping
@@ -64,15 +87,67 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure
                 new_xB = 399
             if new_yB >= 300:
                 new_yB = 299
-
-            mode_colour = get_mode_colour(unmodified_image,
-                                          new_xA, new_yA, new_xB, new_yB, True, figure_counter)
-            print 'mode', mode_colour
+            
+            if recording:
+                got_colour = arry_methody[arry_methody_i][1](unmodified_image, new_xA, new_yA, new_xB, new_yB, False, figure_counter)
+            else:
+                funcy = dicty_methody[arry_colours[arry_colours_i][0]]
+                print 'Running function', funcy.func_name
+                got_colour = funcy(unmodified_image, new_xA, new_yA, new_xB, new_yB, False, figure_counter)
+            print 'colour', got_colour
             cv2.rectangle(drawn_on_image, (new_xA, new_yA), (new_xB, new_yB), (0, 255, 255), 2)
             cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 255, 0), 2)
 
-            colour_diff = euclidian_colour_diff(mode_colour, locked_colour)
+            if recording:
+                colour_diff = euclidian_colour_diff(got_colour, locked_colour)
+            else:
+                print 'new locked_colour', arry_colours[arry_colours_i][2]
+                colour_diff = euclidian_colour_diff(got_colour, arry_colours[arry_colours_i][2])
             print 'diff', colour_diff
+            
+            # TESTING
+            if recording:
+                data.append(got_colour)
+                
+                if len(data) == 10:
+                    total_r = 0
+                    total_g = 0
+                    total_b = 0
+                    for datum in data:
+                        total_r += datum[0]
+                        total_g += datum[1]
+                        total_b += datum[2]
+                    line = arry_methody[arry_methody_i][0] + ', ' + true_colour + ', (' + str(total_r / 10) + ', ' + str(total_g / 10) + ', ' + str(total_b / 10) + ')'
+                    result_file.write(line + '\n')
+                    result_file.flush()
+                    data = []
+                    arry_methody_i += 1
+                    print 'WROTE DATA'
+                    
+                    if arry_methody_i == len(arry_methody):
+                        result_file.close()
+                        exit(0)
+            
+            else:
+                data.append(colour_diff)
+                if len(data) == 10:
+                    data_line_section = ', '.join([str(datum) for datum in data])
+                    line = arry_colours[arry_colours_i][0] + ', ' + true_colour + ', ' + test_colour + ', ' + data_line_section
+                    result_file.write(line + '\n')
+                    result_file.flush()
+                    
+                    data = []
+                    arry_colours_i += 1
+                    
+                    if arry_colours_i == 3:
+                        result_file.close()
+                        exit(0)
+                    
+                    test_colour = arry_colours[arry_colours_i][1]
+                    print 'WROTE DATA'
+                    print 'new method', arry_colours[arry_colours_i][0]
+                    print 'new test_colour', test_colour
+            
             # if shirt colour is more similar that what we had
             # this person becomes the new 'closest to thief'
             if colour_diff < closest_colour_diff:
@@ -136,9 +211,9 @@ def mode_it(image, r, g, b, left, up, right, down):
     for y in range(up, down):
         for x in range(left, right):
             pixel = image[y][x]
-            b[pixel[0]] += 1
-            g[pixel[1]] += 1
             r[pixel[2]] += 1
+            g[pixel[1]] += 1
+            b[pixel[0]] += 1
 
 
 def get_mode(r, g, b):
@@ -154,6 +229,15 @@ def get_mode(r, g, b):
     :rtype: tuple of int
     """
     return index_of_max(r), index_of_max(g), index_of_max(b)
+
+
+def pixel_to_tuple(pixel):
+    """
+    Makes RGB
+    :param pixel:
+    :return:
+    """
+    return pixel[2], pixel[1], pixel[0]
 
 
 def get_mode_colour(image, left, up, right, down, histogram, figure_counter):
@@ -193,6 +277,32 @@ def get_mode_colour(image, left, up, right, down, histogram, figure_counter):
     return get_mode(r, g, b)
 
 
+def get_proper_mode(image, left, up, right, down, _, _1):
+    colour_counter = dict()
+    for y in range(up, down):
+        for x in range(left, right):
+            pixel = pixel_to_tuple(image[y][x])
+            colour_counter[pixel] = colour_counter.get(pixel, 0) + 1
+    mode = max(colour_counter.iteritems(), key=operator.itemgetter(1))[0]
+    return mode
+
+
+def get_condensed_mode(image, left, up, right, down, _, _1):
+    # Const
+    condenser = 16
+    mid_add = (256 / condenser) / 2
+    
+    colour_counter = dict()
+    for y in range(up, down):
+        for x in range(left, right):
+            pixel_bgr = image[y][x]
+            pixel_rgb = pixel_bgr[2] / condenser, pixel_bgr[1] / condenser, pixel_bgr[0] / condenser
+            colour_counter[pixel_rgb] = colour_counter.get(pixel_rgb, 0) + 1
+    mode = max(colour_counter.iteritems(), key=operator.itemgetter(1))[0]
+    mode = mode[0] * condenser + mid_add, mode[1] * condenser + mid_add, mode[2] * condenser + mid_add
+    return mode
+
+
 def index_of_max(arr):
     """
     Given an array of values,
@@ -205,6 +315,21 @@ def index_of_max(arr):
             max_val = arr[i]
             max_index = i
     return max_index
+
+
+def get_average_colour(image, left, up, right, down, _, _1):
+    total_r = 0
+    total_g = 0
+    total_b = 0
+    total_pix = 0
+    for y in range(up, down):
+        for x in range(left, right):
+            pixel = image[y][x]
+            total_r += pixel[2]
+            total_g += pixel[1]
+            total_b += pixel[0]
+            total_pix += 1
+    return total_r / total_pix, total_g / total_pix, total_b / total_pix
 
 
 def detect_angle_to_person(image, rectangle, distro_size):
@@ -299,3 +424,51 @@ def normpdf(x, mean, sd):
     denom = (2 * pi * var) ** .5
     num = math.exp(-(float(x) - float(mean)) ** 2 / (2 * var))
     return num / denom
+
+
+# get_average_colour
+# get_mode_colour
+# get_proper_mode
+# get_condensed_mode
+dicty_methody = {
+    'average': get_average_colour,
+    'mode': get_mode_colour,
+    'proper_mode': get_proper_mode,
+    'condensed_mode': get_condensed_mode
+}
+
+
+arry_methody = [
+    ('average', get_average_colour),
+    ('mode', get_mode_colour),
+    ('proper_mode', get_proper_mode),
+    ('condensed_mode', get_condensed_mode)
+]
+
+
+# def get_colour_from(method, colour_name):
+#     for colour_tuple in arry_colours:
+#         if colour_tuple[0] == method and colour_tuple[1] == colour_name:
+#             return colour_tuple[2]
+#     raise Exception('All hell')
+
+
+arry_colours = [
+    
+    ('average', 'grey', (32, 35, 11)), (
+        'mode', 'grey', (28, 31, 11)), (
+        'proper_mode', 'grey', (27, 30, 11)), (
+        'condensed_mode', 'grey', (24, 24, 8)), (
+        'average', 'green', (38, 41, 12)), (
+        'mode', 'green', (30, 34, 10)), (
+        'proper_mode', 'green', (30, 34, 9)), (
+        'condensed_mode', 'green', (40, 40, 8)), (
+        'average', 'blue', (45, 54, 18)), (
+        'mode', 'blue', (40, 50, 18)), (
+        'proper_mode', 'blue', (41, 51, 18)), (
+        'condensed_mode', 'blue', (40, 56, 24)), (
+        'average', 'red', (86, 44, 4)), (
+        'mode', 'red', (82, 39, 0)), (
+        'proper_mode', 'red', (80, 40, 3)), (
+        'condensed_mode', 'red', (86, 40, 8))
+]

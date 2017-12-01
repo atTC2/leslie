@@ -115,8 +115,8 @@ def decide_on_thief_status():
     global locked_colour
     global history_rgb, max_history, latest_rect_global, locked_colour
     global distro, distro_size, figure_counter
-    counter_time = time.time()
-    start_time = time.time()
+    # counter_time = time.time()
+    # start_time = time.time()
 
     while state_id == states.ALARM:
         if len(history_rgb) >= max_history:
@@ -132,7 +132,7 @@ def decide_on_thief_status():
                 cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
             # Make frame
             if not lost:
-                counter_time = time.time()
+                # counter_time = time.time()
                 with distro_lock:
                     where_do_i_think = distro.index(max(distro))
 
@@ -146,15 +146,15 @@ def decide_on_thief_status():
                 cv2.imshow('actualimage', drawn_on_image)
                 cv2.waitKey(1)
 
-            # print 'time1', time.time() - start_time
-            if time.time() - start_time > 50:
-                print 'Timed out'
-                return
-
-            # print 'time2', time.time() - counter_time
-            if time.time() - counter_time > 22:
-                print 'Counter limit'
-                return
+            # # print 'time1', time.time() - start_time
+            # if time.time() - start_time > 50:
+            #     print 'Timed out'
+            #     return
+            #
+            # # print 'time2', time.time() - counter_time
+            # if time.time() - counter_time > 22:
+            #     print 'Counter limit'
+            #     return
 
 
 def update_distro(mean, std_dev):
@@ -191,12 +191,12 @@ def update_distro(mean, std_dev):
     distro = [float(i) / sum(distro) for i in distro]
 
     range_array = range(0, 400)
-    plt.figure(figure_counter)
-    plt.clf()
-    plt.cla()
-    plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')
-
-    plt.pause(0.0001)
+    # plt.figure(figure_counter)
+    # plt.clf()
+    # plt.cla()
+    # plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')
+    #
+    # plt.pause(0.0001)
     return distro.index(max(distro))
 
 
@@ -276,8 +276,8 @@ def lookout_for_thief(state):
         distro = init_distro(distro_size)
     decide_on_thief_status()
 
-    plt.close(figure_counter)
-    plt.close(figure_counter + 1)
+    # plt.close(figure_counter)
+    # plt.close(figure_counter + 1)
 
     figure_counter += 2
 
