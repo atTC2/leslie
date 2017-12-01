@@ -6,11 +6,11 @@ import numpy
 from imutils.object_detection import non_max_suppression
 import sys
 
-colour_diff_threshold = 45
+colour_diff_threshold = 15
 fov = 120.0  # camera field of view
 
 # TESTING
-frame_count = 0
+frame_count = -5
 
 
 def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure_counter):
@@ -33,9 +33,11 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure
     # TESTING
     global frame_count
     if frame_count >= 50:
-        print 'DONE!'
+        print 'DONE!!!'
         exit(1)
     frame_count += 1
+    if frame_count == 0:
+        print 'Start counting!!!'
     rospy.sleep(1)
 
     # use hog detector
@@ -54,7 +56,8 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure
     lost = True
     closest_rect = None
     latest_rect_global = None
-    print 'Rectangles', len(rects)
+    if frame_count > 0:
+        print 'Rectangles', len(rects)
     if len(rects) != 0:
         rects = numpy.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
         # apply non-maxima suppression to the bounding boxes using a
@@ -78,13 +81,13 @@ def detect_closest_to_thief(unmodified_image, locked_colour, distro_size, figure
                 new_yB = 299
 
             mode_colour = get_mode_colour(unmodified_image,
-                                          new_xA, new_yA, new_xB, new_yB, True, figure_counter)
-            # print 'mode', mode_colour
+                                          new_xA, new_yA, new_xB, new_yB, False, figure_counter)
+            print 'mode', mode_colour
             cv2.rectangle(drawn_on_image, (new_xA, new_yA), (new_xB, new_yB), (0, 255, 255), 2)
             cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 255, 0), 2)
 
             colour_diff = euclidian_colour_diff(mode_colour, locked_colour)
-            # print 'diff', colour_diff
+            print 'diff', colour_diff
             # if shirt colour is more similar that what we had
             # this person becomes the new 'closest to thief'
             if colour_diff < closest_colour_diff:

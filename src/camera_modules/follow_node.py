@@ -115,8 +115,8 @@ def decide_on_thief_status():
     global locked_colour
     global history_rgb, max_history, latest_rect_global, locked_colour
     global distro, distro_size, figure_counter
-    counter_time = time.time()
-    start_time = time.time()
+    # counter_time = time.time()
+    # start_time = time.time()
 
     while state_id == states.ALARM:
         if len(history_rgb) >= max_history:
@@ -124,6 +124,14 @@ def decide_on_thief_status():
 
             # Apply the method
             drawn_on_image, angle, lost, closest_rect, latest_rect = detect_closest_to_thief(img, locked_colour, distro_size, figure_counter)
+            vertical, _ = img.shape[:2]
+            if utils_detect.frame_count <= 0:
+                text_colour = (0, 0, 255)
+            elif utils_detect.frame_count % 2 == 0:
+                text_colour = (0, 255, 0)
+            else:
+                text_colour = (0, 255, 255)
+            cv2.putText(drawn_on_image, str(utils_detect.frame_count), (0, vertical), cv2.FONT_HERSHEY_PLAIN, 1, text_colour, 1)
             latest_rect_global = latest_rect
             if closest_rect is not None:
                 ((xA, yA), (xB, yB)) = closest_rect
@@ -132,7 +140,7 @@ def decide_on_thief_status():
                 cv2.rectangle(drawn_on_image, (xA, yA), (xB, yB), (0, 0, 255), 2)
             # Make frame
             if not lost:
-                counter_time = time.time()
+                # counter_time = time.time()
                 with distro_lock:
                     where_do_i_think = distro.index(max(distro))
 
@@ -140,21 +148,21 @@ def decide_on_thief_status():
                 if chase:
                     angle = detect_angle_to_person(drawn_on_image, ((where_do_i_think - 1, 0), (where_do_i_think + 1, 300)), distro_size)
                     waypoint_pub.publish(json.dumps({'id': 'FOLLOW_PERP', 'data': {'angle': angle, 'distance': 0.5}}))
-
+                where_do_i_think = (closest_rect[0][0] + closest_rect[1][0])/2
                 cv2.rectangle(drawn_on_image, (where_do_i_think - 1, 0), (where_do_i_think + 1, 300), (255, 0, 0), 2)
             with global_lock:
                 cv2.imshow('actualimage', drawn_on_image)
                 cv2.waitKey(1)
 
-            # print 'time1', time.time() - start_time
-            if time.time() - start_time > 50:
-                print 'Timed out'
-                return
-
-            # print 'time2', time.time() - counter_time
-            if time.time() - counter_time > 22:
-                print 'Counter limit'
-                return
+            # # print 'time1', time.time() - start_time
+            # if time.time() - start_time > 50:
+            #     print 'Timed out'
+            #     return
+            #
+            # # print 'time2', time.time() - counter_time
+            # if time.time() - counter_time > 22:
+            #     print 'Counter limit'
+            #     return
 
 
 def update_distro(mean, std_dev):
@@ -191,12 +199,12 @@ def update_distro(mean, std_dev):
     distro = [float(i) / sum(distro) for i in distro]
 
     range_array = range(0, 400)
-    plt.figure(figure_counter)
-    plt.clf()
-    plt.cla()
-    plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')
-
-    plt.pause(0.0001)
+    # plt.figure(figure_counter)
+    # plt.clf()
+    # plt.cla()
+    # plt.plot(range_array, distro, 'b', range_array, other_distro, 'r')
+    #
+    # plt.pause(0.0001)
     return distro.index(max(distro))
 
 
@@ -276,8 +284,8 @@ def lookout_for_thief(state):
         distro = init_distro(distro_size)
     decide_on_thief_status()
 
-    plt.close(figure_counter)
-    plt.close(figure_counter + 1)
+    # plt.close(figure_counter)
+    # plt.close(figure_counter + 1)
 
     figure_counter += 2
 

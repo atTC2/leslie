@@ -25,7 +25,12 @@
     "min_width_cropped": 200,
     "max_width_cropped": 480,
     "starting_state": {
-        "id": "AT_HOME",
-        "data": {}
+        "id": "ALARM",
+        "data": {
+            "current_owner": "Tom",
+            "friend": null,
+            "which_way": true,
+            "colour": [26, 41, 36]
+        }
     }
 }
